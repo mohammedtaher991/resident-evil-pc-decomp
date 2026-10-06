@@ -1,3 +1,5 @@
+# NOTE: This fork was made for AI Claude to get access to this repo for some modding, because of some problem that I got.
+
 # Resident Evil 1 for PC Decompilation
 
 ## Introduction
