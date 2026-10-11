@@ -1,0 +1,735 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c8fbefc..2433bd7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -62,6 +62,7 @@ set(RE1_SOURCES
+     src/game/GameInit.cpp
+     src/game/GameLoop.cpp
+     src/game/GameStart.cpp
++    src/game/Difficulty.cpp
+     src/game/GteMatrix.cpp
+     src/game/InputSystem.cpp
+     src/game/InteractiveScreen.cpp
+diff --git a/Game.vcxproj b/Game.vcxproj
+index e2e3ae3..ee011eb 100644
+--- a/Game.vcxproj
++++ b/Game.vcxproj
+@@ -133,6 +133,7 @@
+     <ClCompile Include="src\game\DebugMenu.cpp" />
+     <ClCompile Include="src\game\DebugSaveLoad.cpp" />
+     <ClCompile Include="src\game\GameStart.cpp" />
++    <ClCompile Include="src\game\Difficulty.cpp" />
+     <ClCompile Include="src\game\GameLoop.cpp" />
+     <ClCompile Include="src\game\MainMenu.cpp" />
+     <ClCompile Include="src\game\OptionsMenu.cpp" />
+@@ -215,6 +216,7 @@
+     <ClInclude Include="src\marni\MarniXInput.h" />
+     <ClInclude Include="src\marni\MarniSound.h" />
+     <ClInclude Include="src\game\SpriteRenderer.h" />
++    <ClInclude Include="src\game\Difficulty.h" />
+     <ClInclude Include="src\game\Ps1EndingCredits.h" />
+     <ClInclude Include="src\game\Ps1FmvSubtitles.h" />
+     <ClInclude Include="src\game\Ps1FmvSubtitleData.h" />
+diff --git a/src/game/DebugSaveLoad.cpp b/src/game/DebugSaveLoad.cpp
+index 6b639d4..7ba93d4 100644
+--- a/src/game/DebugSaveLoad.cpp
++++ b/src/game/DebugSaveLoad.cpp
+@@ -36,6 +36,7 @@
+ #include "../Globals.h"
+ #include "../DebugPrint.h"
+ #include "../system/AssetPath.h"
++#include "Difficulty.h"      // difficulty.ini mode saved with the game
+ #include <cstdio>
+ #include <cstring>
+ 
+@@ -118,6 +119,9 @@ static void DebugRestoreSaveBlock(const char* fileBuffer, int fileSize)
+ 
+         InstallPadDefaultBindings();
+     }
++
++    // difficulty.ini mode, same as SaveLoadScreen.cpp's RestoreSaveBlock.
++    Difficulty_ReadSave(fileBuffer, fileSize);
+ }
+ 
+ // Assemble the full 0xA82 save file image. Mirror of STATE_PERFORM_SAVE's
+@@ -140,6 +144,7 @@ static void DebugAssembleSaveFile(char* fileBuffer)
+     fileBuffer[DBG_OFFSET_COSTUME]    = (char)g_bCostumeVariant;
+     memcpy(fileBuffer + DBG_OFFSET_JOY_BACKUP, g_joyRemapBackupJoy, 0x80);
+     memcpy(fileBuffer + DBG_OFFSET_KEY_BACKUP, g_joyRemapBackupKey, 0x80);
++    Difficulty_WriteSave(fileBuffer);   // difficulty.ini mode (0x7FC)
+ }
+ 
+ // Adopt the character recorded in the restored card: player entity id plus
+diff --git a/src/game/Difficulty.cpp b/src/game/Difficulty.cpp
+new file mode 100644
+index 0000000..5919a18
+--- /dev/null
++++ b/src/game/Difficulty.cpp
+@@ -0,0 +1,301 @@
++// Difficulty.cpp - loads difficulty.ini and serves the values to the game code.
++//
++// File search order (first hit wins):
++//   1. <asset base>/<mode overlay>/difficulty.ini   (e.g. assets/DC/)
++//   2. <asset base>/difficulty.ini
++//   3. <asset root>/difficulty.ini                  (e.g. assets/USA/)
++//   4. <exe dir>/difficulty.ini, then ./difficulty.ini
++// If nothing is found, or no valid [ModeN] section exists, the built-in
++// STANDARD / TRAINING / ADVANCED trio is used.
++#include "Difficulty.h"
++#include "../Globals.h"
++#include "../platform/platform.h"
++#include "../system/AssetPath.h"
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <ctype.h>
++
++#define DIFF_INI_NAME "difficulty.ini"
++
++int g_DifficultyId = 0;
++
++namespace {
++
++DifficultyMode s_modes[DIFF_MAX_MODES];
++int  s_count      = 0;
++int  s_menuOn     = 1;
++int  s_defaultId  = 0;
++bool s_loaded     = false;
++
++int Clamp(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
++
++void SetMode(DifficultyMode* m, const char* name, int dc, int hc, int hj)
++{
++    memset(m, 0, sizeof(*m));
++    strncpy(m->name, name, DIFF_NAME_LEN - 1);
++    m->dcDifficulty    = dc;
++    m->healthChris     = hc;
++    m->healthJill      = hj;
++    m->weaponDamagePct = 100;
++    m->enemyDamagePct  = 100;
++    m->ammoPct         = 100;
++}
++
++// Same trio and health values the Director's Cut uses.
++void LoadBuiltIn(void)
++{
++    s_count = 3;
++    SetMode(&s_modes[0], "STANDARD", 0, 0,   0);
++    SetMode(&s_modes[1], "TRAINING", 1, 180, 150);
++    SetMode(&s_modes[2], "ADVANCED", 2, 100, 70);
++    s_menuOn    = 1;
++    s_defaultId = 0;
++}
++
++bool IEqualN(const char* a, const char* b, int n)
++{
++    for (int i = 0; i < n; ++i) {
++        if (tolower((unsigned char)a[i]) != tolower((unsigned char)b[i])) return false;
++        if (!a[i]) return true;
++    }
++    return true;
++}
++
++bool IEqual(const char* a, const char* b)
++{
++    for (;; ++a, ++b) {
++        if (tolower((unsigned char)*a) != tolower((unsigned char)*b)) return false;
++        if (!*a) return true;
++    }
++}
++
++char* Trim(char* s)
++{
++    while (*s && isspace((unsigned char)*s)) ++s;
++    char* e = s + strlen(s);
++    while (e > s && isspace((unsigned char)e[-1])) *--e = '\0';
++    return s;
++}
++
++bool TryOpenPath(const char* raw, FILE** out)
++{
++    char buf[512];
++    const char* p = plat_normalize_path(raw, buf, sizeof(buf));
++    FILE* f = fopen(p ? p : raw, "r");
++    if (!f) return false;
++    *out = f;
++    return true;
++}
++
++FILE* OpenIni(void)
++{
++    FILE* f = NULL;
++    char cand[512];
++    const char* base = GetAssetBase();
++    const char* mode = GetAssetModeName();
++
++    if (base && base[0]) {
++        if (mode && mode[0]) {
++            snprintf(cand, sizeof(cand), "%s/%s/%s", base, mode, DIFF_INI_NAME);
++            if (TryOpenPath(cand, &f)) return f;
++        }
++        snprintf(cand, sizeof(cand), "%s/%s", base, DIFF_INI_NAME);
++        if (TryOpenPath(cand, &f)) return f;
++    }
++
++    const char* root = GetAssetRoot();
++    if (root && root[0]) {
++        snprintf(cand, sizeof(cand), "%s%s", root, DIFF_INI_NAME);
++        if (TryOpenPath(cand, &f)) return f;
++    }
++
++    char exeDir[240] = "";
++    if (plat_exe_dir(exeDir, sizeof(exeDir)) && exeDir[0]) {
++        snprintf(cand, sizeof(cand), "%s/%s", exeDir, DIFF_INI_NAME);
++        if (TryOpenPath(cand, &f)) return f;
++    }
++    if (TryOpenPath("./" DIFF_INI_NAME, &f)) return f;
++    return NULL;
++}
++
++// Returns mode index for "ModeN" (N = 0..DIFF_MAX_MODES-1), -1 otherwise.
++int ParseModeSection(const char* sec)
++{
++    if (!IEqualN(sec, "Mode", 4)) return -1;
++    const char* d = sec + 4;
++    if (!*d) return -1;
++    for (const char* p = d; *p; ++p)
++        if (!isdigit((unsigned char)*p)) return -1;
++    int n = atoi(d);
++    return (n >= 0 && n < DIFF_MAX_MODES) ? n : -1;
++}
++
++} // namespace
++
++void Difficulty_Reload(void)
++{
++    s_loaded = true;
++    FILE* f = OpenIni();
++    if (!f) { LoadBuiltIn(); return; }
++
++    DifficultyMode tmp[DIFF_MAX_MODES];
++    bool           have[DIFF_MAX_MODES];
++    for (int i = 0; i < DIFF_MAX_MODES; ++i) { SetMode(&tmp[i], "", 0, 0, 0); have[i] = false; }
++
++    int menuOn = 1, defId = 0;
++    int section = -2;   // -2 unknown/ignored, -1 [Menu], 0..N mode index
++    char line[256];
++
++    while (fgets(line, sizeof(line), f)) {
++        char* p = Trim(line);
++        if (!*p || *p == ';' || *p == '#') continue;
++
++        if (*p == '[') {
++            char* e = strchr(p, ']');
++            if (!e) { section = -2; continue; }
++            *e = '\0';
++            char* name = Trim(p + 1);
++            if (IEqual(name, "Menu")) section = -1;
++            else { int m = ParseModeSection(name); section = (m >= 0) ? m : -2; }
++            continue;
++        }
++        if (section == -2) continue;
++
++        char* eq = strchr(p, '=');
++        if (!eq) continue;
++        *eq = '\0';
++        char* key = Trim(p);
++        char* val = Trim(eq + 1);
++        int   num = atoi(val);
++
++        if (section == -1) {
++            if (IEqual(key, "Enabled")) menuOn = num ? 1 : 0;
++            else if (IEqual(key, "Default")) defId = num;
++            continue;
++        }
++
++        DifficultyMode* m = &tmp[section];
++        if (IEqual(key, "Name")) {
++            memset(m->name, 0, sizeof(m->name));
++            for (int i = 0; i < DIFF_NAME_LEN - 1 && val[i]; ++i)
++                m->name[i] = (char)toupper((unsigned char)val[i]);
++            have[section] = m->name[0] != '\0';
++        }
++        else if (IEqual(key, "Dc"))           m->dcDifficulty    = Clamp(num, 0, 2);
++        else if (IEqual(key, "HealthChris"))  m->healthChris     = Clamp(num, 0, 255);
++        else if (IEqual(key, "HealthJill"))   m->healthJill      = Clamp(num, 0, 255);
++        else if (IEqual(key, "WeaponDamage")) m->weaponDamagePct = Clamp(num, 1, 1000);
++        else if (IEqual(key, "EnemyDamage"))  m->enemyDamagePct  = Clamp(num, 1, 1000);
++        else if (IEqual(key, "Ammo"))         m->ammoPct         = Clamp(num, 0, 1000);
++    }
++    fclose(f);
++
++    s_count = 0;
++    for (int i = 0; i < DIFF_MAX_MODES; ++i)
++        if (have[i]) s_modes[s_count++] = tmp[i];
++
++    if (s_count == 0) { LoadBuiltIn(); return; }
++
++    s_menuOn    = menuOn;
++    s_defaultId = Clamp(defId, 0, s_count - 1);
++}
++
++static void EnsureLoaded(void)
++{
++    if (!s_loaded) Difficulty_Reload();
++}
++
++int Difficulty_MenuEnabled(void)
++{
++    EnsureLoaded();
++    return s_menuOn && s_count > 1;
++}
++
++int Difficulty_Count(void)
++{
++    EnsureLoaded();
++    return s_count;
++}
++
++const DifficultyMode* Difficulty_Get(int id)
++{
++    EnsureLoaded();
++    return (id >= 0 && id < s_count) ? &s_modes[id] : NULL;
++}
++
++const DifficultyMode* Difficulty_Active(void)
++{
++    EnsureLoaded();
++    const DifficultyMode* m = Difficulty_Get(g_DifficultyId);
++    return m ? m : &s_modes[0];
++}
++
++int Difficulty_DefaultId(void)
++{
++    EnsureLoaded();
++    return s_defaultId;
++}
++
++int Difficulty_StartHealth(int charId)
++{
++    const DifficultyMode* m = Difficulty_Active();
++    return charId == 0 ? m->healthChris : m->healthJill;
++}
++
++int Difficulty_ScaleWeaponDamage(int dmg)
++{
++    const int pct = Difficulty_Active()->weaponDamagePct;
++    if (pct == 100 || dmg <= 0) return dmg;
++    int r = (dmg * pct + 50) / 100;
++    return r < 1 ? 1 : r;
++}
++
++int Difficulty_ScaleAmmo(int qty)
++{
++    const int pct = Difficulty_Active()->ammoPct;
++    if (pct == 100 || qty <= 0) return qty;
++    int r = (qty * pct + 50) / 100;
++    if (pct > 0 && r < 1) r = 1;      // a non-zero setting never rounds to empty
++    return r > 255 ? 255 : r;         // item quantities are bytes
++}
++
++int Difficulty_EnemyDamagePct(void)
++{
++    return Difficulty_Active()->enemyDamagePct;
++}
++
++// BioCardLayout's DC mode byte (g_DcGameMode) inside a save image; the same
++// offset as OFFSET_DC_MODE in SaveLoadScreen.cpp.
++#define DIFF_SAVE_DC_MODE_OFFSET 0x233
++
++void Difficulty_WriteSave(char* fileBuffer)
++{
++    fileBuffer[DIFF_SAVE_OFFSET + 0] = 'D';
++    fileBuffer[DIFF_SAVE_OFFSET + 1] = 'I';
++    fileBuffer[DIFF_SAVE_OFFSET + 2] = 'F';
++    fileBuffer[DIFF_SAVE_OFFSET + 3] = (char)g_DifficultyId;
++}
++
++void Difficulty_ReadSave(const char* fileBuffer, int fileSize)
++{
++    g_DifficultyId = 0;
++    if (fileSize <= DIFF_SAVE_OFFSET + 3) return;
++
++    if (fileBuffer[DIFF_SAVE_OFFSET + 0] == 'D' &&
++        fileBuffer[DIFF_SAVE_OFFSET + 1] == 'I' &&
++        fileBuffer[DIFF_SAVE_OFFSET + 2] == 'F') {
++        const int id = (unsigned char)fileBuffer[DIFF_SAVE_OFFSET + 3];
++        if (id < Difficulty_Count()) g_DifficultyId = id;
++        return;
++    }
++
++    if (g_bDcMode) {
++        const int dc   = (unsigned char)fileBuffer[DIFF_SAVE_DC_MODE_OFFSET] & 3;
++        const int want = (dc > 2) ? 2 : dc;          // ADVANCED* -> ADVANCED
++        for (int i = 0; i < Difficulty_Count(); i++) {
++            if (Difficulty_Get(i)->dcDifficulty == want) { g_DifficultyId = i; break; }
++        }
++    }
++}
+diff --git a/src/game/Difficulty.h b/src/game/Difficulty.h
+new file mode 100644
+index 0000000..b0eba5d
+--- /dev/null
++++ b/src/game/Difficulty.h
+@@ -0,0 +1,62 @@
++// Difficulty.h - ini-driven difficulty modes for the NEW GAME submenu.
++//
++// Modes are read from difficulty.ini (see data/difficulty.ini). The title
++// screen builds its submenu from this list, and the game code asks the
++// accessors below for the numbers to apply. With the default ini the first
++// three entries are the Director's Cut trio (STANDARD / TRAINING / ADVANCED),
++// so the DC build behaves exactly as before.
++//
++// In the default (OG/USA) build the chosen mode is stored in g_DifficultyId,
++// NOT in g_DcDifficulty / g_DcGameMode, because the OG save loader refuses
++// saves whose dcGameMode is non-zero.
++#pragma once
++
++#define DIFF_MAX_MODES 8
++#define DIFF_NAME_LEN  24
++
++struct DifficultyMode {
++    char name[DIFF_NAME_LEN]; // text shown in the menu (upper-cased)
++    int  dcDifficulty;        // DC_DIFFICULTY_* used in DC mode (0..2)
++    int  healthChris;         // starting health, absolute; 0 = leave as the game sets it
++    int  healthJill;          // same, for Jill
++    int  weaponDamagePct;     // player weapon damage, 100 = unchanged
++    int  enemyDamagePct;      // damage taken by the player, 100 = unchanged (not hooked yet)
++    int  ammoPct;             // starting handgun ammo, 100 = unchanged
++};
++
++// Selected mode (index into the list). Saved with the game in OG builds.
++extern int g_DifficultyId;
++
++// Load difficulty.ini (searched in the asset folders). Safe to call again;
++// falls back to the built-in STANDARD/TRAINING/ADVANCED trio if the file is
++// missing or has no valid modes.
++void Difficulty_Reload(void);
++
++// 1 if the submenu should be shown ([Menu] Enabled=1 and more than one mode).
++int  Difficulty_MenuEnabled(void);
++
++int  Difficulty_Count(void);
++const DifficultyMode* Difficulty_Get(int id);   // NULL if out of range
++const DifficultyMode* Difficulty_Active(void);  // mode for g_DifficultyId (never NULL)
++int  Difficulty_DefaultId(void);                // [Menu] Default, clamped
++
++// Save-file field. The mode index rides in the otherwise unused tail of the
++// original 0x800 block (0x43D..0x7FF is zero-filled on save and discarded on
++// load), so the save file keeps its 0xA82-byte size and size-checking tools
++// (save_editor.html) keep working. Layout: 'D' 'I' 'F' <mode index>.
++#define DIFF_SAVE_OFFSET 0x7FC
++
++// Write the field into a save image (call after the block is assembled).
++void Difficulty_WriteSave(char* fileBuffer);
++
++// Set g_DifficultyId from a loaded save image. A save without the field (made
++// before it existed) loads as mode 0, or in the DC build as the first mode
++// whose Dc= matches the save's own DC difficulty, so an old TRAINING save keeps
++// TRAINING health.
++void Difficulty_ReadSave(const char* fileBuffer, int fileSize);
++
++// Values for game code. All fall back to "no change" when no mode applies.
++int  Difficulty_StartHealth(int charId);        // 0 = leave the game's value; charId 0 = Chris, 1 = Jill
++int  Difficulty_ScaleWeaponDamage(int dmg);
++int  Difficulty_ScaleAmmo(int qty);
++int  Difficulty_EnemyDamagePct(void);
+diff --git a/src/game/GameStart.cpp b/src/game/GameStart.cpp
+index c2df224..aae8994 100644
+--- a/src/game/GameStart.cpp
++++ b/src/game/GameStart.cpp
+@@ -10,6 +10,7 @@
+ #include <cstdio>
+ #include <cstring>
+ #include "../system/AssetPath.h"
++#include "Difficulty.h"      // ini-driven difficulty modes
+ 
+ extern void setSomeColor(int r, int g, int b);              // 0x00470a50
+ extern void empty_40ae40(int);                              // 0x0040ae40 RoomInit.cpp
+@@ -166,6 +167,24 @@ void SetInitialItems(void)
+             g_RebeccaItemSlots[0].Id = DC_ITEM_BERETTA_CUSTOM;
+         }
+     }
++
++    // difficulty.ini: scale the starting handgun ammo (Jill's slot and the
++    // Rebecca slot). 100% leaves the 15 rounds alone; the attract demo keeps
++    // the stock loadout.
++    if ((g_main_state_flags2 & MSF2_ATTRACT_DEMO) == 0) {
++        for (slot_index = 0; slot_index < total_items_slots; slot_index++) {
++            if (g_ItemsSlots[slot_index].Id == ITEM_BERETTA ||
++                g_ItemsSlots[slot_index].Id == DC_ITEM_BERETTA_CUSTOM) {
++                g_ItemsSlots[slot_index].qty =
++                    (unsigned char)Difficulty_ScaleAmmo(g_ItemsSlots[slot_index].qty);
++            }
++        }
++        if (g_RebeccaItemSlots[0].Id == ITEM_BERETTA ||
++            g_RebeccaItemSlots[0].Id == DC_ITEM_BERETTA_CUSTOM) {
++            g_RebeccaItemSlots[0].qty =
++                (unsigned char)Difficulty_ScaleAmmo(g_RebeccaItemSlots[0].qty);
++        }
++    }
+ }
+ 
+ // ---------------------------------------------------------------------------
+@@ -460,6 +479,17 @@ void InitializeGame(void)
+                     g_PlayerHealthCopy = g_playerEntity.health;
+                 }
+             }
++
++            // difficulty.ini: the chosen mode's starting health (0 = keep the
++            // value above). The built-in TRAINING/ADVANCED numbers equal the DC
++            // ones, so this changes nothing in the DC unless the ini edits them.
++            {
++                const int startHealth = Difficulty_StartHealth(g_playerEntity.id & 1);
++                if (startHealth > 0) {
++                    g_playerEntity.health = (short)startHealth;
++                    g_PlayerHealthCopy = g_playerEntity.health;
++                }
++            }
+         } else {
+             LoadAttractModePlayerData();
+             if (g_bDcMode) {
+@@ -558,6 +588,17 @@ void InitializeGame(void)
+         }
+     }
+ 
++    // difficulty.ini: max health follows the mode's starting health (same
++    // reason as the DC block above - the EKG is derived from it). Runs for
++    // continued games too: g_DifficultyId comes back from the save. The
++    // attract demo keeps the stock value. maxHealth is a byte, so cap at 255.
++    if ((g_main_state_flags2 & MSF2_ATTRACT_DEMO) == 0) {
++        const int startHealth = Difficulty_StartHealth(g_playerEntity.id & 1);
++        if (startHealth > 0) {
++            g_playerEntity.maxHealth = (unsigned char)(startHealth > 255 ? 255 : startHealth);
++        }
++    }
++
+     // Placeholder only: SetupCharacterData (called below) replaces it with the
+     // character's own record. Same value as the original's initial store.
+     g_playerEntity.Sca_info = g_scaDataTable[0];
+diff --git a/src/game/SaveLoadScreen.cpp b/src/game/SaveLoadScreen.cpp
+index 3cf5343..e3c7d75 100644
+--- a/src/game/SaveLoadScreen.cpp
++++ b/src/game/SaveLoadScreen.cpp
+@@ -13,6 +13,7 @@
+ #include "SFXIds.h"
+ #include "PrintText.h"
+ #include "dc/Items.h"    // lockpick item id (is_lockpick_item)
++#include "Difficulty.h"   // g_DifficultyId saved with the game
+ #include <cstdio>
+ #include <cstring>
+ #include "../system/AssetPath.h"
+@@ -776,6 +777,9 @@ static void RestoreSaveBlock(const char* fileBuffer, int fileSize)
+         // recognised and left as it was saved.
+         InstallPadDefaultBindings();
+     }
++
++    // difficulty.ini mode (0x7FC..0x7FF, inside the discarded block tail).
++    Difficulty_ReadSave(fileBuffer, fileSize);
+ }
+ 
+ // ============================================================================
+@@ -1139,6 +1143,7 @@ void LoadSaveGameState(int mode, int flags, int useInkRibbon, int sfxBank, int c
+             fileBuffer[OFFSET_COSTUME_VARIANT]   = (char)g_bCostumeVariant;
+             memcpy(fileBuffer + OFFSET_JOY_BACKUP, g_joyRemapBackupJoy, 0x80);
+             memcpy(fileBuffer + OFFSET_KEY_BACKUP, g_joyRemapBackupKey, 0x80);
++            Difficulty_WriteSave(fileBuffer);   // difficulty.ini mode
+             FileWrite(g_saveFileName, fileBuffer, SAVE_FILE_SIZE);
+ 
+             // Build the save-animation reveal string:
+diff --git a/src/game/TitleScreen.cpp b/src/game/TitleScreen.cpp
+index e4d23eb..99ad25b 100644
+--- a/src/game/TitleScreen.cpp
++++ b/src/game/TitleScreen.cpp
+@@ -10,6 +10,7 @@
+ #include <cstdlib>
+ #include <cstring>          // memcpy, for the DC title sheet assembly
+ #include "../system/AssetPath.h"
++#include "Difficulty.h"      // ini-driven NEW GAME difficulty modes
+ 
+ extern void logos_state(void);
+ 
+@@ -372,6 +373,50 @@ void UpdateTitleTextSprite(unsigned char brightness, unsigned char selectionId)
+     display_texture(td, 2, entry->slot, 1);
+ }
+ 
++// ============================================================================
++// ini-driven difficulty menu helpers
++// ============================================================================
++// The DC art submenu (state 10) only has pictures for STANDARD / TRAINING /
++// ADVANCED, so it is used only while difficulty.ini still lists exactly that
++// trio in that order. Any other list (extra modes, renamed modes) is drawn as
++// a text menu (state 11), which works in both the OG and the DC build.
++static const char* const g_diffTrioNames[3] = { "STANDARD", "TRAINING", "ADVANCED" };
++
++static bool DiffArtMenuUsable(void)
++{
++    if (Difficulty_Count() != 3) return false;
++    for (int i = 0; i < 3; i++) {
++        const DifficultyMode* m = Difficulty_Get(i);
++        if (m == NULL || m->dcDifficulty != i || strcmp(m->name, g_diffTrioNames[i]) != 0)
++            return false;
++    }
++    return true;
++}
++
++// Text menu layout / colours. PrintText8x14 takes the same coordinate space as
++// the save screen; these are the values to tune if the list lands in the wrong
++// place or colour on your build.
++#define DIFF_MENU_X        110
++#define DIFF_MENU_Y        150
++#define DIFF_MENU_STEP      18
++#define DIFF_MENU_COLOR_NORMAL  0
++#define DIFF_MENU_COLOR_SELECT  3
++
++static int s_diffCursor = 0;   // highlighted entry while state 11 is active
++
++static void DrawDifficultyTextMenu(void)
++{
++    const int count = Difficulty_Count();
++    for (int i = 0; i < count; i++) {
++        const DifficultyMode* m = Difficulty_Get(i);
++        if (m == NULL) continue;
++        sprintf(PRINT_TEXT_BUFFER, "%c %s", (i == s_diffCursor) ? '>' : ' ', m->name);
++        PrintText8x14((short)DIFF_MENU_X, (short)(DIFF_MENU_Y + i * DIFF_MENU_STEP),
++                      (unsigned char)((i == s_diffCursor) ? DIFF_MENU_COLOR_SELECT
++                                                          : DIFF_MENU_COLOR_NORMAL), 0);
++    }
++}
++
+ // ============================================================================
+ // update_title_options (0x00430810)
+ // ============================================================================
+@@ -409,6 +454,8 @@ void update_title_options(void)
+             if ((g_PlayerPadPressed & 0xeff) || sidewinderPress) {
+                 play_sfx(SFX_BANKS, SFX_TITLE_EVIL01);
+                 play_sfx(SFX_BANKS, 1); // null sfx
++                // ini mode index (art menu rows 3..5 are modes 0..2).
++                g_DifficultyId = (g_titleSelectionId >= 3) ? (g_titleSelectionId - 3) : 0;
+                 // The PS1 keys ADVANCED* off the hold timer, not the choice (it
+                 // drops the choice back to 5 after drawing the green cell).
+                 if (g_titleSelectionId == 5) {
+@@ -451,6 +498,50 @@ void update_title_options(void)
+             }
+             return;
+ 
++        case 11:
++            // ini-driven text difficulty menu (OG build, or DC with a custom
++            // difficulty.ini). Same controls as the DC art submenu. g_titleSelectionId
++            // stays 1 (NEW GAME), so the exit goes through the original NEW GAME path
++            // and the fade-out keeps drawing the NEW GAME cell.
++            if (g_PlayerPadPressed & 0x5100) {
++                const int n = Difficulty_Count();
++                if (!(g_PlayerPadPressed & 0x1000)) {
++                    s_diffCursor = (s_diffCursor + 1 < n) ? s_diffCursor + 1 : 0;
++                } else {
++                    s_diffCursor = (s_diffCursor > 0) ? s_diffCursor - 1 : n - 1;
++                }
++                g_titleDemoTime = 0x708;
++            }
++
++            if ((g_PlayerPadPressed & 0xeff) || sidewinderPress) {
++                play_sfx(SFX_BANKS, SFX_TITLE_EVIL01);
++                play_sfx(SFX_BANKS, 1); // null sfx
++                g_DifficultyId = s_diffCursor;
++                if (g_bDcMode) {
++                    // DC build: also drive the DC difficulty (the OG build must
++                    // not - its save loader refuses saves with a DC game mode).
++                    const DifficultyMode* m = Difficulty_Get(s_diffCursor);
++                    g_DcDifficulty = (m != NULL) ? m->dcDifficulty : DC_DIFFICULTY_STANDARD;
++                }
++                g_titleOptionsFading = 6;
++                g_fade_type_id = 1;
++                g_fading_counter = 0x7F00;
++                fade_update();
++                g_bGameActive = 2;
++                return;
++            }
++
++            DrawDifficultyTextMenu();
++
++            g_titleDemoTime--;
++            if (g_titleDemoTime == 0) {
++                g_titleOptionsFading = 3;
++                g_fade_type_id = 2;
++                g_fading_counter = 0x400;
++                fade_update();
++            }
++            return;
++
+         case 0:
+             g_titleOptionsFading = 1;
+             g_fade_type_id = 2;
+@@ -474,13 +565,29 @@ void update_title_options(void)
+ 		// (state 10 below) instead of starting the game. The PS1 is silent here:
+ 		// the title sfx plays on the *submenu* confirm, or on LOAD GAME, which
+ 		// falls through to the original path below.
+-		if (g_bDcMode && ((g_PlayerPadPressed & 0xeff) || sidewinderPress) &&
++		// With difficulty.ini this applies to both builds: NEW GAME opens the
++		// difficulty menu - the DC art one (state 10) when the ini still holds the
++		// STANDARD/TRAINING/ADVANCED trio, otherwise the text one (state 11).
++		if (((g_PlayerPadPressed & 0xeff) || sidewinderPress) &&
+ 		    g_titleSelectionId == 1) {
+-			g_titleOptionsFading = 10;
+-			g_titleSelectionId = 3;          // STANDARD
+-			g_titleDemoTime = 0x708;
+-			g_titleHoldTimer = 0x5A;
+-			return;
++			if (Difficulty_MenuEnabled()) {
++				g_titleDemoTime = 0x708;
++				if (g_bDcMode && DiffArtMenuUsable()) {
++					g_titleOptionsFading = 10;
++					g_titleSelectionId = 3 + Difficulty_DefaultId();   // default mode
++					g_titleHoldTimer = 0x5A;
++				} else {
++					g_titleOptionsFading = 11;
++					s_diffCursor = Difficulty_DefaultId();
++				}
++				return;
++			}
++			// Menu disabled in the ini: start the default mode straight away.
++			g_DifficultyId = Difficulty_DefaultId();
++			if (g_bDcMode) {
++				const DifficultyMode* m = Difficulty_Get(g_DifficultyId);
++				g_DcDifficulty = (m != NULL) ? m->dcDifficulty : DC_DIFFICULTY_STANDARD;
++			}
+ 		}
+ 
+ 		if ((g_PlayerPadPressed & 0xeff) || sidewinderPress) {
+@@ -690,6 +797,8 @@ void title_state(void)
+     g_titleMode = 0;
+     g_titleOptionsFading = 0;
+ 
++    Difficulty_Reload();    // pick up edits to difficulty.ini each time the title opens
++
+     init_title_screen();
+ 
+     // empty_00497c10(0);
+diff --git a/src/game/WeaponDamage.cpp b/src/game/WeaponDamage.cpp
+index ac0f784..b84741c 100644
+--- a/src/game/WeaponDamage.cpp
++++ b/src/game/WeaponDamage.cpp
+@@ -9,6 +9,7 @@
+ #include <cstdlib>                   // rand() - MSVC got this via <windows.h>
+ #include "entities/EntityCommon.h"   // ENEMY_* / NPC_* type ids
+ #include "dc/WeaponDamageTables.h"    // DC per-mode damage columns (generated)
++#include "Difficulty.h"             // ini-driven weapon damage scaling
+ 
+ // ---- Global scratch variable (set by apply_weapon_damage before hit detection) ----
+ extern int g_scaled_down_dist;  // holds weapon_id - 1 during hit detection
+@@ -419,6 +420,14 @@ unsigned char apply_weapon_damage(unsigned int weapon_id)
+         damage = g_weaponHitRecordsSecondRun[tableIdx].dmg;    // second-playthrough damage @ +0
+     }
+ 
++    // difficulty.ini: scale the damage the player deals (100% = unchanged, so the
++    // default trio behaves exactly as before). Applied after the per-mode table
++    // lookup, so it stacks on top of the DC/second-playthrough columns.
++    {
++        const int scaled = Difficulty_ScaleWeaponDamage((int)damage);
++        damage = (short)(scaled > 32767 ? 32767 : scaled);
++    }
++
+     enemy->health -= damage;
+ 
+     if ((g_playerEntityPointer.flags & 0xE0) != 0x20) {
