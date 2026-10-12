@@ -137,7 +137,10 @@
     <ClCompile Include="src\game\MenuFont.cpp" />
     <ClCompile Include="src\game\Addon.cpp" />
     <!-- Add-on code: every addons\<Name>\src\*.cpp is built in (src\game\Addon.h). -->
-    <ClCompile Include="addons\*\src\*.cpp" />
+    <!-- add-on hooks only: skip anything named like a game source (copies belong in
+         Assets\addons\<Name>\src) and the add-on folder that source replacement owns -->
+    <GameSrcFiles Include="src\*.cpp;src\game\*.cpp;src\game\entities\*.cpp;src\game\dc\*.cpp;src\system\*.cpp;src\platform\*.cpp" />
+    <ClCompile Include="addons\*\src\*.cpp" Exclude="@(GameSrcFiles->'addons\*\src\%(Filename)%(Extension)');addons\$(AddonOverride)\src\*.cpp" />
     <ClCompile Include="src\game\GameLoop.cpp" />
     <ClCompile Include="src\game\MainMenu.cpp" />
     <ClCompile Include="src\game\OptionsMenu.cpp" />
