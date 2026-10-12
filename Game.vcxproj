@@ -263,6 +263,24 @@
     <AddonAssetsDir Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'=='' And '$(AssetsCand3)'!='' And Exists('$(AssetsCand3)\addons\$(AddonOverride)\src')">$(AssetsCand3)</AddonAssetsDir>
     <AddonAssetsDir Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'=='' And Exists('$(AssetsCand4)\addons\$(AddonOverride)\src')">$(AssetsCand4)</AddonAssetsDir>
   </PropertyGroup>
+  <!-- Add-on code under addons\<Name>\src is for NEW hooks. A copy of a game source
+       (same file name as something in src\) must never be compiled from there - copies
+       belong in Assets\addons\<Name>\src, where the source replacement above handles
+       them. Without this a stray copy fails to compile or defines everything twice.
+       The add-on folder named by difficulty.ini [Addon] Name= is also skipped, because
+       its sources come from the Assets folder instead. -->
+  <Target Name="DropShadowedAddonSources" BeforeTargets="ClCompile">
+    <ItemGroup>
+      <_GameSrc Include="@(ClCompile)" Condition="$([System.String]::new('%(RelativeDir)').StartsWith('src\'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_GameSrcNames>;@(_GameSrc->'%(Filename)%(Extension)', ';');</_GameSrcNames>
+      <_OwnAddonDir Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'!=''">addons\$(AddonOverride)\src\</_OwnAddonDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <ClCompile Remove="@(ClCompile)" Condition="$([System.String]::new('%(RelativeDir)').StartsWith('addons\')) And ($(_GameSrcNames.Contains(';%(Filename)%(Extension);')) Or ('$(_OwnAddonDir)'!='' And '%(RelativeDir)'=='$(_OwnAddonDir)'))" />
+    </ItemGroup>
+  </Target>
   <Target Name="ReportAddonOverride" BeforeTargets="ClCompile">
     <Message Importance="high" Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'!=''" Text="[Addon] source replacement '$(AddonOverride)' from $(AddonAssetsDir)\addons\$(AddonOverride)\src: @(AddonOverrideSrc->'%(Filename)%(Extension)', ' ')" />
     <Warning Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'==''" Text="[Addon] '$(AddonOverride)' is set but no addons\$(AddonOverride)\src folder was found under any assets path; building the original sources." />

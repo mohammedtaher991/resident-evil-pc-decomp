@@ -145,7 +145,21 @@ list(APPEND RE1_SOURCES
 # Add-on code: every addons/<Name>/src/*.cpp is built into the game. A hook only
 # runs when its add-on is listed in config.ini [Addon] Name= (src/game/Addon.h).
 file(GLOB RE1_ADDON_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/addons/*/src/*.cpp)
-list(APPEND RE1_SOURCES ${RE1_ADDON_SOURCES})
+# A copy of a game source in addons/<Name>/src is never built from there (copies belong
+# in Assets/addons/<Name>/src, see the source replacement below).
+foreach(a ${RE1_ADDON_SOURCES})
+    get_filename_component(aname "${a}" NAME)
+    set(_dup FALSE)
+    foreach(g ${RE1_SOURCES})
+        get_filename_component(gname "${g}" NAME)
+        if(gname STREQUAL aname)
+            set(_dup TRUE)
+        endif()
+    endforeach()
+    if(NOT _dup)
+        list(APPEND RE1_SOURCES ${a})
+    endif()
+endforeach()
 
 # Source replacement: difficulty.ini [Addon] Name= (or addons/override.txt, or
 # -DRE1_ADDON_OVERRIDE=<Name>) names an add-on whose <Assets>/addons/<Name>/src/*.cpp
