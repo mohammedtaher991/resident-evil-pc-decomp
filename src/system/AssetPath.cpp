@@ -23,6 +23,7 @@
 #include "../DebugPrint.h"        // dbg_printf
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 // The configured data root (folder + trailing separator). Defaults to the
 // compile-time USA root so release behaviour is unchanged unless config.ini
@@ -73,6 +74,7 @@ static const char* s_overlayRoot = NULL;
 static char s_addonNames[ASSET_MAX_ADDONS][32];
 static char s_addonRoots[ASSET_MAX_ADDONS][260];
 static int  s_addonCount = 0;
+static int (*s_addonFilter)(const char*) = NULL;
 
 // Which top-level folders a non-OG mode is allowed to take from the BASE tree.
 //
@@ -282,6 +284,25 @@ void SetAddons(const char* names)
     }
 }
 
+void SetAddonFilter(AddonFilterFn fn)
+{
+    s_addonFilter = fn;
+}
+
+int IsAddonActive(const char* name)
+{
+    if (name == NULL) return 0;
+    for (int i = 0; i < s_addonCount; i++) {
+        const char* a = s_addonNames[i];
+        const char* b = name;
+        while (*a && *b && tolower((unsigned char)*a) == tolower((unsigned char)*b)) { a++; b++; }
+        if (*a == '\0' && *b == '\0') {
+            return (s_addonFilter == NULL || s_addonFilter(s_addonNames[i])) ? 1 : 0;
+        }
+    }
+    return 0;
+}
+
 int GetAddonCount(void)
 {
     return s_addonCount;
@@ -447,6 +468,7 @@ const char* ResolveAssetRoot(const char* path, char* out, size_t outSize)
     // answer in the log.
     for (int i = 0; i < s_addonCount; i++) {
         char candidate[260];
+        if (s_addonFilter != NULL && !s_addonFilter(s_addonNames[i])) continue;
         if (sprintf_s(candidate, sizeof(candidate), "%s%s", s_addonRoots[i], tail) < 0) continue;
         char probeBuf[260];
         const char* probe = plat_normalize_path(candidate, probeBuf, sizeof(probeBuf));

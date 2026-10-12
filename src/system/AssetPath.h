@@ -121,6 +121,13 @@ const char*  GetAssetModeName(void);
 #define ASSET_MAX_ADDONS 4
 void         SetAddons(const char* commaSeparatedNames);
 int          GetAddonCount(void);
+// Optional per-add-on gate (the game installs one so an add-on can be limited to
+// chosen difficulty modes). Return 0 to switch an add-on off for now. With no
+// filter every listed add-on is active.
+typedef int (*AddonFilterFn)(const char* addonName);
+void         SetAddonFilter(AddonFilterFn fn);
+// 1 when `name` is listed AND the filter lets it through.
+int          IsAddonActive(const char* name);
 const char*  GetAddonName(int index);   // NULL when out of range
 
 // Rewrites whichever known asset-root form a path was compiled with (debug

@@ -536,6 +536,8 @@ BOOL ConfigFile_Load(void)
         const char* dn = Difficulty_AddonNames();
         if (dn && dn[0]) SetAddons(dn);
     }
+    // Modes with an Addon= key switch add-ons on only while they are the active mode.
+    SetAddonFilter(Difficulty_AddonAllowed);
     dbg_printf("[CONFIG] mode=%s overlay=%s ps1_credits=%d\n", GameModeName(g_GameMode),
                GetAssetModeName()[0] ? GetAssetModeName() : "(none)",
                g_bPs1EndingCredits ? 1 : 0);

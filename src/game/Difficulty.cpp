@@ -29,6 +29,7 @@ int  s_count      = 0;
 int  s_menuOn     = 1;
 int  s_defaultId  = 0;
 bool s_loaded     = false;
+bool s_anyModeAddon = false;   // some [ModeN] has Addon=
 char s_addonNames[128] = "";
 char s_iniPath[512]    = "";
 
@@ -205,17 +206,45 @@ void Difficulty_Reload(void)
         else if (IEqual(key, "WeaponDamage")) m->weaponDamagePct = Clamp(num, 1, 1000);
         else if (IEqual(key, "EnemyDamage"))  m->enemyDamagePct  = Clamp(num, 1, 1000);
         else if (IEqual(key, "Ammo"))         m->ammoPct         = Clamp(num, 0, 1000);
+        else if (IEqual(key, "Addon")) {
+            strncpy(m->addon, val, sizeof(m->addon) - 1);
+            m->addon[sizeof(m->addon) - 1] = 0;
+        }
     }
     fclose(f);
 
     s_count = 0;
+    s_anyModeAddon = false;
     for (int i = 0; i < DIFF_MAX_MODES; ++i)
-        if (have[i]) s_modes[s_count++] = tmp[i];
+        if (have[i]) {
+            if (tmp[i].addon[0]) s_anyModeAddon = true;
+            s_modes[s_count++] = tmp[i];
+        }
 
     if (s_count == 0) { LoadBuiltIn(); return; }
 
     s_menuOn    = menuOn;
     s_defaultId = Clamp(defId, 0, s_count - 1);
+}
+
+int Difficulty_AddonAllowed(const char* name)
+{
+    if (!s_loaded) Difficulty_Reload();
+    if (!s_anyModeAddon) return 1;
+    const DifficultyMode* m = Difficulty_Active();
+    if (!m || !m->addon[0] || !name) return 0;
+    // m->addon is a ',' or ';' separated list; compare each entry, ignoring case.
+    const char* p = m->addon;
+    while (*p) {
+        while (*p == ' ' || *p == ',' || *p == ';') ++p;
+        const char* start = p;
+        while (*p && *p != ',' && *p != ';') ++p;
+        const char* end = p;
+        while (end > start && end[-1] == ' ') --end;
+        const size_t n = (size_t)(end - start);
+        if (n > 0 && strlen(name) == n && IEqualN(start, name, (int)n)) return 1;
+    }
+    return 0;
 }
 
 const char* Difficulty_AddonNames(void)

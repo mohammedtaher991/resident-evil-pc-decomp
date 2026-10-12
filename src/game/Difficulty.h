@@ -22,6 +22,7 @@ struct DifficultyMode {
     int  weaponDamagePct;     // player weapon damage, 100 = unchanged
     int  enemyDamagePct;      // damage taken by the player, 100 = unchanged (not hooked yet)
     int  ammoPct;             // starting handgun ammo, 100 = unchanged
+    char addon[64];           // add-on(s) active only in this mode (Addon= key); "" = none
 };
 
 // Selected mode (index into the list). Saved with the game in OG builds.
@@ -71,3 +72,13 @@ void Difficulty_ApplyEnemyDamage(short healthBefore);
 // [Addon] Name= from difficulty.ini ("" when absent). Takes precedence over
 // config.ini [Addon] Name= so every game-tuning setting lives in one file.
 const char* Difficulty_AddonNames(void);
+
+// AddonFilterFn (see SetAddonFilter): 1 when add-on `name` may be used with the
+// current difficulty. If no mode has an Addon= key every add-on is always on;
+// otherwise an add-on is on only in the modes that list it.
+int Difficulty_AddonAllowed(const char* name);
+
+// Add-on gate for the chosen difficulty. When no mode in difficulty.ini has an
+// Addon= line, every listed add-on is always active (the old behaviour). Once any
+// mode has one, an add-on is active only while the selected mode lists it.
+int Difficulty_AddonAllowed(const char* addonName);

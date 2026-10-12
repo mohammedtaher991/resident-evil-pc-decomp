@@ -61,11 +61,7 @@ void Addon_Register(AddonHook hook, AddonHookFn fn, const char* addonName)
 
 int Addon_IsEnabled(const char* addonName)
 {
-    if (addonName == NULL) return 0;
-    for (int i = 0; i < GetAddonCount(); i++) {
-        if (IEqual(GetAddonName(i), addonName)) return 1;
-    }
-    return 0;
+    return IsAddonActive(addonName);   // listed AND allowed for the chosen difficulty
 }
 
 void Addon_RunInit(void)
