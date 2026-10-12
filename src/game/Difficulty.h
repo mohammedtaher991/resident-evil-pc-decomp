@@ -67,3 +67,7 @@ int  Difficulty_EnemyDamagePct(void);
 // enemy source file has to be touched. Healing and unchanged health are left
 // alone. No-op at 100%.
 void Difficulty_ApplyEnemyDamage(short healthBefore);
+
+// [Addon] Name= from difficulty.ini ("" when absent). Takes precedence over
+// config.ini [Addon] Name= so every game-tuning setting lives in one file.
+const char* Difficulty_AddonNames(void);

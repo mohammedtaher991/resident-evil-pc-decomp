@@ -231,17 +231,44 @@
     <ClInclude Include="src\game\entities\Zombie.h" />
     <ClInclude Include="src\system\PngImage.h" />
   </ItemGroup>
-  <!-- Source replacement. Name the add-on in addons\override.txt (one line, e.g.
-       Western) and every .cpp in Assets\addons\<Name>\src is built INSTEAD of the
-       original of the same name (src\game, src\game\entities, src\game\dc); a .cpp
-       with no original is simply added. Example.cpp is skipped. No override.txt = nothing
-       changes. Keeps the originals untouched. -->
+  <!-- Source replacement. difficulty.ini (project folder) says which add-on:
+         [Addon]
+         Name=Western
+         Replace=1        (default 1; 0 = keep the originals)
+       Every .cpp in <Assets>\addons\<Name>\src is then built INSTEAD of the original
+       of the same name (src\game, src\game\entities, src\game\dc); a .cpp with no
+       original is added. Example.cpp is skipped. <Assets> is found from, in order:
+       difficulty.ini [Assets] Path=, config.ini [Assets] Path= (project folder, then
+       bin\Debug, bin\Release), then .\Assets. The first one that really contains
+       addons\<Name>\src wins. addons\override.txt (one line) still works and wins. -->
   <PropertyGroup>
+    <DiffIniFile>$(MSBuildProjectDirectory)\difficulty.ini</DiffIniFile>
     <AddonOverrideFile>$(MSBuildProjectDirectory)\addons\override.txt</AddonOverrideFile>
     <AddonOverride Condition="'$(AddonOverride)'=='' And Exists('$(AddonOverrideFile)')">$([System.IO.File]::ReadAllText('$(AddonOverrideFile)').Trim())</AddonOverride>
+    <AddonOverride Condition="'$(AddonOverride)'=='' And Exists('$(DiffIniFile)')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(DiffIniFile)')), '(?ims)^[ \t]*\[Addon\][^\[]*?^[ \t]*Name[ \t]*=[ \t]*([^\r\n\x3B\x2C]*)').Groups[1].Value.Trim())</AddonOverride>
+    <AddonReplaceOff Condition="Exists('$(DiffIniFile)')">$([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(DiffIniFile)')), '(?ims)^[ \t]*\[Addon\][^\[]*?^[ \t]*Replace[ \t]*=[ \t]*0'))</AddonReplaceOff>
+    <AddonReplaceOff Condition="'$(AddonReplaceOff)'==''">False</AddonReplaceOff>
+    <AddonOverride Condition="'$(AddonReplaceOff)'=='True'"></AddonOverride>
+
+    <AssetsFromDiff Condition="Exists('$(MSBuildProjectDirectory)\difficulty.ini')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\difficulty.ini')), '(?ims)^[ \t]*\[Assets\][^\[]*?^[ \t]*Path[ \t]*=[ \t]*([^\r\n\x3B\x2C]*)').Groups[1].Value.Trim())</AssetsFromDiff>
+    <AssetsFromCfg Condition="Exists('$(MSBuildProjectDirectory)\config.ini')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\config.ini')), '(?ims)^[ \t]*\[Assets\][^\[]*?^[ \t]*Path[ \t]*=[ \t]*([^\r\n\x3B\x2C]*)').Groups[1].Value.Trim())</AssetsFromCfg>
+    <AssetsFromDbg Condition="Exists('$(MSBuildProjectDirectory)\bin\Debug\config.ini')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\bin\Debug\config.ini')), '(?ims)^[ \t]*\[Assets\][^\[]*?^[ \t]*Path[ \t]*=[ \t]*([^\r\n\x3B\x2C]*)').Groups[1].Value.Trim())</AssetsFromDbg>
+    <!-- candidate asset roots -->
+    <AssetsCand1 Condition="'$(AssetsFromDiff)'!=''">$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(AssetsFromDiff)'))</AssetsCand1>
+    <AssetsCand2 Condition="'$(AssetsFromCfg)'!=''">$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(AssetsFromCfg)'))</AssetsCand2>
+    <AssetsCand3 Condition="'$(AssetsFromDbg)'!=''">$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)\bin\Debug', '$(AssetsFromDbg)'))</AssetsCand3>
+    <AssetsCand4>$(MSBuildProjectDirectory)\Assets</AssetsCand4>
+    <AddonAssetsDir Condition="'$(AddonOverride)'!='' And '$(AssetsCand1)'!='' And Exists('$(AssetsCand1)\addons\$(AddonOverride)\src')">$(AssetsCand1)</AddonAssetsDir>
+    <AddonAssetsDir Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'=='' And '$(AssetsCand2)'!='' And Exists('$(AssetsCand2)\addons\$(AddonOverride)\src')">$(AssetsCand2)</AddonAssetsDir>
+    <AddonAssetsDir Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'=='' And '$(AssetsCand3)'!='' And Exists('$(AssetsCand3)\addons\$(AddonOverride)\src')">$(AssetsCand3)</AddonAssetsDir>
+    <AddonAssetsDir Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'=='' And Exists('$(AssetsCand4)\addons\$(AddonOverride)\src')">$(AssetsCand4)</AddonAssetsDir>
   </PropertyGroup>
-  <ItemGroup Condition="'$(AddonOverride)'!=''">
-    <AddonOverrideSrc Include="$(MSBuildProjectDirectory)\Assets\addons\$(AddonOverride)\src\*.cpp" Exclude="$(MSBuildProjectDirectory)\Assets\addons\$(AddonOverride)\src\Example.cpp" />
+  <Target Name="ReportAddonOverride" BeforeTargets="ClCompile">
+    <Message Importance="high" Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'!=''" Text="[Addon] source replacement '$(AddonOverride)' from $(AddonAssetsDir)\addons\$(AddonOverride)\src: @(AddonOverrideSrc->'%(Filename)%(Extension)', ' ')" />
+    <Warning Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'==''" Text="[Addon] '$(AddonOverride)' is set but no addons\$(AddonOverride)\src folder was found under any assets path; building the original sources." />
+  </Target>
+  <ItemGroup Condition="'$(AddonOverride)'!='' And '$(AddonAssetsDir)'!=''">
+    <AddonOverrideSrc Include="$(AddonAssetsDir)\addons\$(AddonOverride)\src\*.cpp" Exclude="$(AddonAssetsDir)\addons\$(AddonOverride)\src\Example.cpp" />
     <ClCompile Remove="@(AddonOverrideSrc->'src\game\%(Filename)%(Extension)')" />
     <ClCompile Remove="@(AddonOverrideSrc->'src\game\entities\%(Filename)%(Extension)')" />
     <ClCompile Remove="@(AddonOverrideSrc->'src\game\dc\%(Filename)%(Extension)')" />

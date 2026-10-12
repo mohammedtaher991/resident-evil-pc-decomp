@@ -11,6 +11,7 @@
 #include "../Globals.h"
 #include "../platform/platform.h"
 #include "../system/AssetPath.h"
+#include "../DebugPrint.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +29,8 @@ int  s_count      = 0;
 int  s_menuOn     = 1;
 int  s_defaultId  = 0;
 bool s_loaded     = false;
+char s_addonNames[128] = "";
+char s_iniPath[512]    = "";
 
 int Clamp(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
@@ -85,6 +88,8 @@ bool TryOpenPath(const char* raw, FILE** out)
     const char* p = plat_normalize_path(raw, buf, sizeof(buf));
     FILE* f = fopen(p ? p : raw, "r");
     if (!f) return false;
+    strncpy(s_iniPath, p ? p : raw, sizeof(s_iniPath) - 1);
+    s_iniPath[sizeof(s_iniPath) - 1] = 0;
     *out = f;
     return true;
 }
@@ -137,8 +142,11 @@ int ParseModeSection(const char* sec)
 void Difficulty_Reload(void)
 {
     s_loaded = true;
+    s_addonNames[0] = 0;
+    s_iniPath[0] = 0;
     FILE* f = OpenIni();
-    if (!f) { LoadBuiltIn(); return; }
+    if (!f) { dbg_printf("[DIFF] no difficulty.ini found, using built-in modes\n"); LoadBuiltIn(); return; }
+    dbg_printf("[DIFF] reading %s\n", s_iniPath);
 
     DifficultyMode tmp[DIFF_MAX_MODES];
     bool           have[DIFF_MAX_MODES];
@@ -158,6 +166,7 @@ void Difficulty_Reload(void)
             *e = '\0';
             char* name = Trim(p + 1);
             if (IEqual(name, "Menu")) section = -1;
+            else if (IEqual(name, "Addon")) section = -3;
             else { int m = ParseModeSection(name); section = (m >= 0) ? m : -2; }
             continue;
         }
@@ -170,6 +179,13 @@ void Difficulty_Reload(void)
         char* val = Trim(eq + 1);
         int   num = atoi(val);
 
+        if (section == -3) {
+            if (IEqual(key, "Name")) {
+                strncpy(s_addonNames, val, sizeof(s_addonNames) - 1);
+                s_addonNames[sizeof(s_addonNames) - 1] = 0;
+            }
+            continue;
+        }
         if (section == -1) {
             if (IEqual(key, "Enabled")) menuOn = num ? 1 : 0;
             else if (IEqual(key, "Default")) defId = num;
@@ -200,6 +216,12 @@ void Difficulty_Reload(void)
 
     s_menuOn    = menuOn;
     s_defaultId = Clamp(defId, 0, s_count - 1);
+}
+
+const char* Difficulty_AddonNames(void)
+{
+    if (!s_loaded) Difficulty_Reload();
+    return s_addonNames;
 }
 
 static void EnsureLoaded(void)

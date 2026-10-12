@@ -5,6 +5,7 @@
 #include "../Globals.h"
 #include "../DebugPrint.h"
 #include "../platform/platform.h"
+#include "../game/Difficulty.h"   // [Addon] Name= in difficulty.ini
 #include "AssetPath.h"   // SetAssetBase / SetSaveRoot / SetAssetVersion
 
 #include <stdio.h>
@@ -529,6 +530,11 @@ BOOL ConfigFile_Load(void)
         SetAddons(addonNames);
     } else {
         SetAddons("");
+    }
+    // difficulty.ini [Addon] Name= wins over config.ini when it is set.
+    {
+        const char* dn = Difficulty_AddonNames();
+        if (dn && dn[0]) SetAddons(dn);
     }
     dbg_printf("[CONFIG] mode=%s overlay=%s ps1_credits=%d\n", GameModeName(g_GameMode),
                GetAssetModeName()[0] ? GetAssetModeName() : "(none)",
