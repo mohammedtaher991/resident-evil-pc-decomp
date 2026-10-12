@@ -21,6 +21,7 @@
 #include <cstdarg>
 #include "../DebugPrint.h"
 #include "../system/AssetPath.h"
+#include "Difficulty.h"      // ini-driven EnemyDamage
 #include "Addon.h"            // add-on code hooks
 
 // Forward declarations for functions only used within game_loop
@@ -365,6 +366,13 @@ LAB_00480e89:
                         g_debugSaveMenuFlag = 0;
                         DebugSaveMenu();
                     }
+                }
+
+                // difficulty.ini EnemyDamage: scale whatever the player lost this
+                // frame (g_PlayerHealthCopy is the frame-start health). Not during
+                // the attract demo, which replays recorded input.
+                if ((g_main_state_flags2 & MSF2_ATTRACT_DEMO) == 0) {
+                    Difficulty_ApplyEnemyDamage(g_PlayerHealthCopy);
                 }
 
                 // 0x00480f90-0x00480fae: Check player death

@@ -266,6 +266,24 @@ int Difficulty_EnemyDamagePct(void)
     return Difficulty_Active()->enemyDamagePct;
 }
 
+void Difficulty_ApplyEnemyDamage(short healthBefore)
+{
+    const int pct = Difficulty_Active()->enemyDamagePct;
+    if (pct == 100) return;
+    const int now = g_playerEntity.health;
+    if (now >= healthBefore) return;               // no damage this frame (or healed)
+    const int taken = healthBefore - now;
+    // A drop this large in one frame is a scripted kill / death sequence, not a
+    // hit (the hardest single blows in the game are well under 100). Scaling it
+    // down could leave the player alive in a room that expects them dead.
+    if (taken >= 100) return;
+    int scaled = (taken * pct + 50) / 100;
+    if (pct > 0 && scaled < 1) scaled = 1;         // a hit never rounds away to nothing
+    int result = healthBefore - scaled;
+    if (result < -32768) result = -32768;
+    g_playerEntity.health = (short)result;
+}
+
 // BioCardLayout's DC mode byte (g_DcGameMode) inside a save image; the same
 // offset as OFFSET_DC_MODE in SaveLoadScreen.cpp.
 #define DIFF_SAVE_DC_MODE_OFFSET 0x233

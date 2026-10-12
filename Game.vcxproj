@@ -231,6 +231,26 @@
     <ClInclude Include="src\game\entities\Zombie.h" />
     <ClInclude Include="src\system\PngImage.h" />
   </ItemGroup>
+  <!-- Source replacement. Name the add-on in addons\override.txt (one line, e.g.
+       Western) and every .cpp in Assets\addons\<Name>\src is built INSTEAD of the
+       original of the same name (src\game, src\game\entities, src\game\dc); a .cpp
+       with no original is simply added. Example.cpp is skipped. No override.txt = nothing
+       changes. Keeps the originals untouched. -->
+  <PropertyGroup>
+    <AddonOverrideFile>$(MSBuildProjectDirectory)\addons\override.txt</AddonOverrideFile>
+    <AddonOverride Condition="'$(AddonOverride)'=='' And Exists('$(AddonOverrideFile)')">$([System.IO.File]::ReadAllText('$(AddonOverrideFile)').Trim())</AddonOverride>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(AddonOverride)'!=''">
+    <AddonOverrideSrc Include="$(MSBuildProjectDirectory)\Assets\addons\$(AddonOverride)\src\*.cpp" Exclude="$(MSBuildProjectDirectory)\Assets\addons\$(AddonOverride)\src\Example.cpp" />
+    <ClCompile Remove="@(AddonOverrideSrc->'src\game\%(Filename)%(Extension)')" />
+    <ClCompile Remove="@(AddonOverrideSrc->'src\game\entities\%(Filename)%(Extension)')" />
+    <ClCompile Remove="@(AddonOverrideSrc->'src\game\dc\%(Filename)%(Extension)')" />
+    <ClCompile Include="@(AddonOverrideSrc)">
+      <!-- the copies keep their original relative includes ("../../Globals.h"), so the
+           folders they came from are search paths too -->
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\game;$(ProjectDir)src\game\entities;$(ProjectDir)addons</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

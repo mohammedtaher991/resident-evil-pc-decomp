@@ -147,9 +147,27 @@ list(APPEND RE1_SOURCES
 file(GLOB RE1_ADDON_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/addons/*/src/*.cpp)
 list(APPEND RE1_SOURCES ${RE1_ADDON_SOURCES})
 
-add_executable(residentevil ${RE1_SOURCES})
+# Source replacement: addons/override.txt (or -DRE1_ADDON_OVERRIDE=<Name>) names an
+# add-on whose Assets/addons/<Name>/src/*.cpp are built INSTEAD of the originals of
+# the same file name; files with no original are added. Example.cpp is skipped.
+if(NOT RE1_ADDON_OVERRIDE AND EXISTS "${CMAKE_SOURCE_DIR}/addons/override.txt")
+    file(READ "${CMAKE_SOURCE_DIR}/addons/override.txt" RE1_ADDON_OVERRIDE)
+    string(STRIP "${RE1_ADDON_OVERRIDE}" RE1_ADDON_OVERRIDE)
+endif()
+if(RE1_ADDON_OVERRIDE)
+    file(GLOB RE1_OVERRIDE_SRCS CONFIGURE_DEPENDS
+         ${CMAKE_SOURCE_DIR}/Assets/addons/${RE1_ADDON_OVERRIDE}/src/*.cpp)
+    list(FILTER RE1_OVERRIDE_SRCS EXCLUDE REGEX "/Example\\.cpp$")
+    foreach(o ${RE1_OVERRIDE_SRCS})
+        get_filename_component(oname "${o}" NAME)
+        list(FILTER RE1_SOURCES EXCLUDE REGEX "/${oname}$")
+    endforeach()
+    list(APPEND RE1_SOURCES ${RE1_OVERRIDE_SRCS})
+    message(STATUS "Add-on source override '${RE1_ADDON_OVERRIDE}': ${RE1_OVERRIDE_SRCS}")
+endif()
 
-target_include_directories(residentevil PRIVATE src addons)
+add_executable(residentevil ${RE1_SOURCES})
+target_include_directories(residentevil PRIVATE src addons src/game src/game/entities)
 
 # ---------------------------------------------------------------------------
 # 32-bit x86: the game's layout and the scheduler assume it.

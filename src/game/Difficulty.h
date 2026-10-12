@@ -60,3 +60,10 @@ int  Difficulty_StartHealth(int charId);        // 0 = leave the game's value; c
 int  Difficulty_ScaleWeaponDamage(int dmg);
 int  Difficulty_ScaleAmmo(int qty);
 int  Difficulty_EnemyDamagePct(void);
+
+// Scales the damage the player took THIS FRAME by the active mode's EnemyDamage.
+// `healthBefore` is the player's health at the start of the frame
+// (g_PlayerHealthCopy). Done after the frame's updates, in one place, so no
+// enemy source file has to be touched. Healing and unchanged health are left
+// alone. No-op at 100%.
+void Difficulty_ApplyEnemyDamage(short healthBefore);
