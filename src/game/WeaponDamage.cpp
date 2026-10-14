@@ -10,6 +10,7 @@
 #include "entities/EntityCommon.h"   // ENEMY_* / NPC_* type ids
 #include "dc/WeaponDamageTables.h"    // DC per-mode damage columns (generated)
 #include "Difficulty.h"             // ini-driven weapon damage scaling
+#include "Balance.h"                // balance.xml damage overrides
 
 // ---- Global scratch variable (set by apply_weapon_damage before hit detection) ----
 extern int g_scaled_down_dist;  // holds weapon_id - 1 during hit detection
@@ -418,6 +419,15 @@ unsigned char apply_weapon_damage(unsigned int weapon_id)
     } else {
         hitState = g_weaponHitRecordsSecondRun[tableIdx].hit;  // second-playthrough hit-state @ +4
         damage = g_weaponHitRecordsSecondRun[tableIdx].dmg;    // second-playthrough damage @ +0
+    }
+
+    // balance.xml: per weapon / enemy / playthrough overrides of the table value
+    // (no balance.xml = unchanged). Runs before the difficulty.ini scaling.
+    {
+        const int secondRun =
+            (!g_bDcMode && Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) != 0) ? 1 : 0;
+        const int balanced = Balance_WeaponDamage(enemyType, (unsigned int)weaponAdj, secondRun, (int)damage);
+        damage = (short)(balanced > 32767 ? 32767 : balanced);
     }
 
     // difficulty.ini: scale the damage the player deals (100% = unchanged, so the
