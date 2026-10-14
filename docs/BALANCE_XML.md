@@ -61,3 +61,17 @@ limited to a mode/add-on, so the `.cpp` swap is no longer needed (set `Replace=0
 * `difficulty.ini` scaling still applies after balance.xml.
 
 `samples/balance_western.xml` is the converted Western set; `samples/balance_full.xml` a full export.
+
+## Zombie bite damage (per table entry)
+The zombie's bite damage comes from two 16-entry tables indexed by the zombie's behaviour
+(`behavior_flags & 0x0F`): first playthrough `Zombie:damage_normal#<i>`, second playthrough
+`Zombie:damage_hard#<i>`. The code values are 10,10,6,6,10,10,10,10,10 (first) and
+12,12,9,9,12,12,12,12,12 (second); entries 9-15 are 0. Example:
+```xml
+<enemies mode="WESTERN">
+  <hit key="Zombie:damage_normal#0" damage="14"/>
+  <hit key="Zombie:damage_hard#0"   damage="18"/>
+  <hit key="Zombie:damage_hard#2"   damage="11"/>
+</enemies>
+```
+`<enemy name="Zombie" scale="..."/>` and the `Zombie:zombie_attack#1` key still apply on top.

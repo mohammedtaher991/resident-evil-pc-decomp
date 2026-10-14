@@ -4,6 +4,7 @@
 #include "Zombie.h"
 #include "../../DebugPrint.h"
 #include <cstdlib>
+#include <stdio.h>
 #include "../Balance.h"   // BAL_DMG - balance.xml
 
 // Forward declarations for cross-TU functions
@@ -1698,11 +1699,18 @@ void zombie_attack(void)
             short tick = (short)ENTITY->action_ticks_counter;
             ENTITY->action_ticks_counter = (unsigned short)(tick + 1);
             if (tick % 19 == 0) {
-                unsigned char damage;
-                if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0)
-                    damage = zombie_damage_normal_tbl[ENTITY->behavior_flags & 0x0F];
-                else
-                    damage = zombie_damage_hard_tbl[ENTITY->behavior_flags & 0x0F];
+                int damage;
+                char balKey[40];
+                const unsigned bi = ENTITY->behavior_flags & 0x0F;
+                // balance.xml: every table entry has its own key, e.g.
+                //   Zombie:damage_normal#0 (first run) / Zombie:damage_hard#0 (second run)
+                if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) {
+                    sprintf(balKey, "Zombie:damage_normal#%u", bi);
+                    damage = BAL_DMG(balKey, zombie_damage_normal_tbl[bi]);
+                } else {
+                    sprintf(balKey, "Zombie:damage_hard#%u", bi);
+                    damage = BAL_DMG(balKey, zombie_damage_hard_tbl[bi]);
+                }
                 g_playerEntity.health -= BAL_DMG("Zombie:zombie_attack#1", damage);
                 Snd_em(3);
 
