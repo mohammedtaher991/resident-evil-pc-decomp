@@ -23,5 +23,24 @@
     <hit key="WebSpinner:ws_update_webs#1" damage="3"/>  <!-- WebSpinner.cpp:1457 -->
     <!-- Yawn -->
     <hit key="Yawn:yawn_action_bite#1" damage="28"/>  <!-- Yawn.cpp:879 -->
+    <!-- Zombie bite: first playthrough (normal table) / second playthrough (hard table) -->
+    <hit key="Zombie:damage_normal#0" damage="12"/>
+    <hit key="Zombie:damage_normal#1" damage="12"/>
+    <hit key="Zombie:damage_normal#2" damage="9"/>
+    <hit key="Zombie:damage_normal#3" damage="9"/>
+    <hit key="Zombie:damage_normal#4" damage="12"/>
+    <hit key="Zombie:damage_normal#5" damage="12"/>
+    <hit key="Zombie:damage_normal#6" damage="12"/>
+    <hit key="Zombie:damage_normal#7" damage="12"/>
+    <hit key="Zombie:damage_normal#8" damage="12"/>
+    <hit key="Zombie:damage_hard#0" damage="12"/>
+    <hit key="Zombie:damage_hard#1" damage="12"/>
+    <hit key="Zombie:damage_hard#2" damage="9"/>
+    <hit key="Zombie:damage_hard#3" damage="9"/>
+    <hit key="Zombie:damage_hard#4" damage="12"/>
+    <hit key="Zombie:damage_hard#5" damage="12"/>
+    <hit key="Zombie:damage_hard#6" damage="12"/>
+    <hit key="Zombie:damage_hard#7" damage="12"/>
+    <hit key="Zombie:damage_hard#8" damage="12"/>
   </enemies>
 </balance>

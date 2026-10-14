@@ -1,3 +1,0 @@
-Add inside <enemies mode="WESTERN">:
-    <hit key="Zombie:damage_normal#0" damage="10"/> ... #8   (first playthrough, entries 0-8)
-    <hit key="Zombie:damage_hard#0"   damage="12"/> ... #8   (second playthrough, entries 0-8)
