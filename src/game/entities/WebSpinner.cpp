@@ -99,6 +99,7 @@
 #include "../BioCard.h"
 #include <cstdlib>
 #include <cstring>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 // ============================================================================
 // Raw field access. Every width here is one the original actually uses.
@@ -952,9 +953,9 @@ void ws_behaviour_lunge(void)
             eub(ENTITY, 0x87) = 6;
             Snd_em(4);
             if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) {
-                g_playerEntity.health = (short)(g_playerEntity.health - 10);
+                g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("WebSpinner:ws_behaviour_lunge#1", 10));
             } else {
-                g_playerEntity.health = (short)(g_playerEntity.health - 0x12);
+                g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("WebSpinner:ws_behaviour_lunge#2", 0x12));
             }
             if (g_playerEntity.health < 0) g_playerEntity.health = 1;
             g_playerEntity.isBeingAttackedFlag = (unsigned char)((int)facing + 1);
@@ -1467,9 +1468,9 @@ void ws_update_webs(char count)
                                            &g_playerPosScratch, 0);
                     ew(ENTITY, 0xc2) = (short)(ew(ENTITY, 0xc2) - 0x3c);
                     if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) {
-                        g_playerEntity.health = (short)(g_playerEntity.health - 2);
+                        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("WebSpinner:ws_update_webs#1", 2));
                     } else {
-                        g_playerEntity.health = (short)(g_playerEntity.health - 3);
+                        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("WebSpinner:ws_update_webs#2", 3));
                     }
                     if (g_playerEntity.health < 0) g_playerEntity.health = 1;
                     g_playerEntity.action_behavior = 100;

@@ -4,6 +4,7 @@
 #include "Zombie.h"
 #include "../../DebugPrint.h"
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 // Forward declarations for cross-TU functions
 extern int is_entity_in_switch_zone(VECTOR* pos, void* zoneData);
@@ -1702,7 +1703,7 @@ void zombie_attack(void)
                     damage = zombie_damage_normal_tbl[ENTITY->behavior_flags & 0x0F];
                 else
                     damage = zombie_damage_hard_tbl[ENTITY->behavior_flags & 0x0F];
-                g_playerEntity.health -= damage;
+                g_playerEntity.health -= BAL_DMG("Zombie:zombie_attack#1", damage);
                 Snd_em(3);
 
                 Effect_CreateBillboard(0, 0,

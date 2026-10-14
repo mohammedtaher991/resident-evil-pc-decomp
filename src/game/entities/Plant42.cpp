@@ -38,6 +38,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                                   // 0x0048bad0
 extern void SetAnimSlot(AnimSlot* slots, int slotPtr, int index);         // 0x0048b6b0
@@ -450,9 +451,9 @@ static void plant42_sweep_hit(void)
 
     Play3DSnd(2, soundId, 0, soundPos);
     if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0)
-        g_playerEntity.health -= 0x10;
+        g_playerEntity.health -= BAL_DMG("Plant42:plant42_sweep_hit#1", 0x10);
     else
-        g_playerEntity.health -= 0x19;
+        g_playerEntity.health -= BAL_DMG("Plant42:plant42_sweep_hit#2", 0x19);
     if (g_playerEntity.health < 0) g_playerEntity.health = 1;
 }
 
@@ -658,9 +659,9 @@ static void plant42_behavior_spit(void)
             *(unsigned int*)&g_playerEntity.animationId = 0x00640002;
             p42_step() -= 8;
             if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0)
-                g_playerEntity.health -= 8;
+                g_playerEntity.health -= BAL_DMG("Plant42:plant42_behavior_spit#1", 8);
             else
-                g_playerEntity.health -= 15;
+                g_playerEntity.health -= BAL_DMG("Plant42:plant42_behavior_spit#2", 15);
             if (g_playerEntity.health < 0) g_playerEntity.health = 1;
             Play3DSnd(2, 2, 0, joint_sound_pos(14));
             return;
@@ -914,9 +915,9 @@ static void plant42_behavior_hold(void)
         g_playerEntity.action_behavior = 2;
         g_playerEntity.action_state = 0;
         if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0)
-            g_playerEntity.health -= 0x14;
+            g_playerEntity.health -= BAL_DMG("Plant42:plant42_behavior_hold#1", 0x14);
         else
-            g_playerEntity.health -= 0x28;
+            g_playerEntity.health -= BAL_DMG("Plant42:plant42_behavior_hold#2", 0x28);
         // fall through
     case 9:
         ENTITY->action_state = (unsigned char)(ENTITY->action_state + (char)p42_anim(0, 0x40));

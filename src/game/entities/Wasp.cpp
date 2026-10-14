@@ -106,6 +106,7 @@
 #include "../../Globals.h"
 #include "../BioCard.h"
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                            // 0x0048bad0
 extern void Flg_on(int baseAddr, unsigned int bitIndex);           // 0x00473ef0
@@ -815,9 +816,9 @@ void wasp_behavior_grab(void)
         }
 
         if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) {
-            g_playerEntity.health = (short)(g_playerEntity.health - 8);
+            g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Wasp:wasp_behavior_grab#1", 8));
         } else {
-            g_playerEntity.health = (short)(g_playerEntity.health - 15);
+            g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Wasp:wasp_behavior_grab#2", 15));
         }
         if (g_playerEntity.health < 0) {
             g_playerEntity.health = 1;

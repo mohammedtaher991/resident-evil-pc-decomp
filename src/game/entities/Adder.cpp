@@ -81,6 +81,7 @@
 #include "../../Globals.h"
 #include "../BioCard.h"
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                            // 0x0048bad0
 extern void Flg_on(int baseAddr, unsigned int bitIndex);           // 0x00473ef0
@@ -706,7 +707,7 @@ void adder_behavior_bite(void)
 
         g_playerEntity.isBeingAttackedFlag = 1;
         g_playerEntity.action_behavior     = 100;
-        g_playerEntity.health = (short)(g_playerEntity.health - 6);
+        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Adder:adder_behavior_bite#1", 6));
         Play3DSnd(3, 0, 0, (int)g_playerEntity.scaMatrixData.localMatrix.t);
 
         g_playerPosScratch.x = 0;

@@ -76,6 +76,7 @@
 #include "../BioCard.h"
 #include <cstdlib>
 #include <cstring>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                            // 0x0048bad0
 extern void Flg_on(int baseAddr, unsigned int bitIndex);           // 0x00473ef0
@@ -1180,10 +1181,10 @@ static void hunter_atk_swing(void) // 0x00417480
                 *(unsigned int*)&g_playerEntity.animationId = 0x00640002;
                 ENTITY->action_state = 2;
                 if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) != 0) {
-                    g_playerEntity.health = (short)(g_playerEntity.health - 13);
+                    g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Hunter:hunter_roll_leap_fixed#1", 13));
                     return;
                 }
-                g_playerEntity.health = (short)(g_playerEntity.health - 10);
+                g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Hunter:hunter_roll_leap_fixed#2", 10));
             }
         }
     } else {
@@ -1428,10 +1429,10 @@ static void hunter_dodge_swipe(void) // 0x00417ba0
                                         0x30, 0x80820, (void*)0x606060);
                     Snd_em(3);
                     if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) != 0) {
-                        g_playerEntity.health = (short)(g_playerEntity.health - 0x14);
+                        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Hunter:hunter_roll_leap_fixed#3", 0x14));
                         return;
                     }
-                    g_playerEntity.health = (short)(g_playerEntity.health - 0xF);
+                    g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Hunter:hunter_roll_leap_fixed#4", 0xF));
                     return;
                 }
             }

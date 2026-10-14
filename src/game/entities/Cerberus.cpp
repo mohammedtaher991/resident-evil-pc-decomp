@@ -42,6 +42,7 @@
 #include "EntityCommon.h"
 #include "../../Globals.h"
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                       // 0x0048bad0
 extern void Flg_on(int baseAddr, unsigned int bitIndex);      // 0x00473ef0
@@ -1195,7 +1196,7 @@ unsigned char cerberus_bite_player(void)
     unsigned char facing = (unsigned char)is_facing_toward_entity(&g_playerEntity);
     g_playerEntity.isBeingAttackedFlag = (unsigned char)(facing + 1);
     g_playerEntity.action_behavior     = (unsigned char)(facing + 0x66);
-    g_playerEntity.health = (short)(g_playerEntity.health - 0xC);
+    g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Cerberus:cerberus_bite_player#1", 0xC));
 
     CB_TURN_DELTA = 0x200;
     CB_SWERVE = 0;

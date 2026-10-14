@@ -100,6 +100,7 @@
 #include "../BioCard.h"
 #include <cstdlib>
 #include <cstring>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 // ============================================================================
 // Raw field access. Every width here is one the original actually uses.
@@ -692,7 +693,7 @@ void bt_behaviour_bite(void)
             if (player_distance_z != 0 || g_scaled_down_dist != 0) {
                 g_animFrameIdSave = is_facing_toward_entity(&g_playerEntity) & 0xFF;
                 Snd_em(4);
-                g_playerEntity.health = (short)(g_playerEntity.health - 0x14);
+                g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("BlackTiger:bt_behaviour_bite#1", 0x14));
                 if (g_playerEntity.health < 0) g_playerEntity.health = 1;
                 if (g_playerEntity.health >= 0) {
                     g_playerEntity.isBeingAttackedFlag = (unsigned char)(g_animFrameIdSave + 1);

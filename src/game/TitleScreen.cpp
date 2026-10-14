@@ -12,6 +12,7 @@
 #include "../system/AssetPath.h"
 #include "Difficulty.h"      // ini-driven NEW GAME difficulty modes
 #include "MenuFont.h"
+#include "Balance.h"
 
 extern void logos_state(void);
 
@@ -812,6 +813,7 @@ void title_state(void)
     g_titleOptionsFading = 0;
 
     Difficulty_Reload();    // pick up edits to difficulty.ini each time the title opens
+    Balance_Reload();       // ...and to balance.xml
 
     init_title_screen();
 

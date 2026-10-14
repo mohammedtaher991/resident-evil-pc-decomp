@@ -78,6 +78,7 @@
 #include "../../Globals.h"
 #include "../BioCard.h"
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                                   // 0x0048bad0
 extern void Flg_on(int baseAddr, unsigned int bitIndex);                  // 0x00473ef0
@@ -983,7 +984,7 @@ void mp_step_03(void)
 {
     MP_TIMER_A = (short)(MP_TIMER_A - 1);
     if (MP_TIMER_A == 0) {
-        g_playerEntity.health = (short)(g_playerEntity.health - 2);
+        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("MonsterPlant:mp_step_03#1", 2));
         // Only variant 5 refuses to kill outright.
         if (ENTITY->behavior_flags == 5 && g_playerEntity.health < 0) {
             g_playerEntity.health = 0;
@@ -1071,7 +1072,7 @@ void mp_step_06(void)
             }
             g_playerEntity.isBeingAttackedFlag = (unsigned char)(front + 1);
             g_playerEntity.action_behavior     = (unsigned char)(front + 0x66);
-            g_playerEntity.health = (short)(g_playerEntity.health - 2);
+            g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("MonsterPlant:mp_step_06#1", 2));
             if (g_playerEntity.health < 0) {
                 g_playerEntity.health = 0;
             }

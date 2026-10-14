@@ -81,6 +81,7 @@
 #include "../BioCard.h"
 #include <cstring>
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 // ---------------------------------------------------------------------------
 // Yawn hardcodes a 15-joint skeleton (joints[0..14]) in three places, exactly
@@ -876,9 +877,9 @@ void yawn_action_bite(void)
                 g_animFrameIdSave = is_facing_toward_entity(&g_playerEntity) & 0xff;
 
                 if (Flg_ck((int)&g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) {
-                    g_playerEntity.health = (short)(g_playerEntity.health - 10);
+                    g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Yawn:yawn_action_bite#1", 10));
                 } else {
-                    g_playerEntity.health = (short)(g_playerEntity.health - 0x1c);
+                    g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Yawn:yawn_action_bite#2", 0x1c));
                 }
                 if (g_playerEntity.health < 0) g_playerEntity.health = 1;
 

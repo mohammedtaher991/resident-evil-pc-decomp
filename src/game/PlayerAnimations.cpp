@@ -6,6 +6,7 @@
 #include "../DebugPrint.h"
 #include "entities/EntityCommon.h"
 #include "dc/Items.h"             // lockpick/ammo item ids the DC moved
+#include "Balance.h"   // BAL_DMG - balance.xml
 
 // ============================================================================
 // Player animation function stubs (populated into g_playerAnimFunctions by set_player_animations_functions)
@@ -2359,7 +2360,7 @@ static void player_state_01_control(void)
         if (prev == 0) {
             unsigned char fast = (unsigned char)(g_playerEntity.healthStatusFlags & 0x40);
             g_playerEntity.pad_174 = fast ? 7 : 120;
-            g_playerEntity.health -= 2;
+            g_playerEntity.health -= BAL_DMG("Player:player_state_01_control#1", 2);
             // Only the 0x40 variant is allowed to drive health negative (that is
             // the one that actually kills); everything else floors at 1.
             if ((short)g_playerEntity.health < 0 && fast == 0) {

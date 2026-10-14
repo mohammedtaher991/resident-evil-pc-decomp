@@ -101,6 +101,7 @@
 #include "../../marni/MarniSystem.h"     // MarniCreateTexture
 #include <cstring>
 #include <cstdlib>
+#include "../Balance.h"   // BAL_DMG - balance.xml
 
 extern void ResetJointTransforms(void);                                   // 0x0048bad0
 extern void SetAnimSlot(AnimSlot* slots, int slotPtr, int index);         // 0x0048b6b0
@@ -691,9 +692,9 @@ void tyrant_latch_player_attacker(short yawBias)
 void tyrant_damage_player(int base, int withFlag)
 {
     if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0)
-        g_playerEntity.health = (short)(g_playerEntity.health - base);
+        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Tyrant:tyrant_damage_player#1", base));
     else
-        g_playerEntity.health = (short)(g_playerEntity.health - withFlag);
+        g_playerEntity.health = (short)(g_playerEntity.health - BAL_DMG("Tyrant:tyrant_damage_player#2", withFlag));
 }
 
 // Bleed the accumulated animation speed off, clamping at zero.  The original
