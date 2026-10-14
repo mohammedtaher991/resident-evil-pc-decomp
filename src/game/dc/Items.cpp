@@ -43,10 +43,9 @@ unsigned char dc_item_pickup_quantity(unsigned char itemId, unsigned char quanti
 
 int dc_is_infinite_colt_python(unsigned char itemId)
 {
-    // The flag is DC-only (the DC's ENDING overlay raises it on an ADVANCED
-    // best ending) and the port sets it only in DC mode, so the g_bDcMode gate
-    // changes nothing for a DC session and keeps Mode=OG exactly as it was.
-    return g_bDcMode
-        && itemId == (unsigned char)ITEM_COLT_PYTHON_MAG
+    // The flag is raised by the DC's ADVANCED best ending, and (any mode) by the
+    // difficulty.ini [Ending] TimedRewardInfinite=1 Colt Python reward. Nothing
+    // else sets it, so a plain OG save never has it.
+    return itemId == (unsigned char)ITEM_COLT_PYTHON_MAG
         && Flg_ck((int)g_ScenarioFlags, DC_SCENARIO_FLAG_INF_COLT_PYTHON) != 0;
 }

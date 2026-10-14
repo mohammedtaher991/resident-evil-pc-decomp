@@ -2,6 +2,7 @@
 // game_start, InitializeGame and all player/inventory initialization.
 // All functions decompiled from Ghidra with original addresses
 #include "../Globals.h"
+#include "Extras.h"
 #include "dc/ItemTables.h"
 #include "dc/Items.h"
 #include "../marni/MarniSystem.h"
@@ -123,7 +124,11 @@ void SetInitialItems(void)
     if ((g_playerEntity.id & 3) == CHAR_CHRIS) {
         // Chris: 6 slots, Rebecca gets Baretta with 15 bullets
         item_slot = initial_items;           // Chris items at offset 0
-        total_items_slots = 6;
+        total_items_slots = (unsigned char)Extras_CharSlotCount(CHAR_CHRIS);
+        for (int rb = 0; rb < Extras_RebeccaStorage(); rb++) {   // fresh Rebecca inventory
+            g_RebeccaItemSlots[rb].Id = 0;
+            g_RebeccaItemSlots[rb].qty = 0;
+        }
         g_RebeccaItemSlots[0].Id = ITEM_BERETTA;
         g_RebeccaItemSlots[0].qty = 15;
     } else {
@@ -186,6 +191,9 @@ void SetInitialItems(void)
                 (unsigned char)Difficulty_ScaleAmmo(g_RebeccaItemSlots[0].qty);
         }
     }
+
+    // difficulty.ini [Start]: ChrisItems= / JillItems= / RebeccaItems=
+    Extras_ApplyStartItems();
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +206,7 @@ void CountHeldItems(void) // 0x00451600
     g_TotalHeldItems = 0;
     unsigned char itemSlot = *(unsigned char*)g_ItemSlotsPointer;
     while (itemSlot != 0 &&
-           g_TotalHeldItems < (unsigned char)((4 - ((g_playerEntity.id & 3) != 1)) * 2)) {
+           g_TotalHeldItems < (unsigned char)Extras_ActiveSlotCount()) {
         g_TotalHeldItems = g_TotalHeldItems + 1;
         itemSlot = ((unsigned char*)g_ItemSlotsPointer)[(unsigned int)g_TotalHeldItems * 2];
     }

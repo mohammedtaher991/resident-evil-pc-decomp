@@ -28,6 +28,8 @@
 #include "Ps1EndingCredits.h"
 #include "SpriteRenderer.h"
 #include "BioCard.h"
+#include "Extras.h"        // difficulty.ini [Ending] options
+#include "../DebugPrint.h"
 #include "PrintText.h"
 #include "../system/AssetPath.h"
 #include <cstdio>
@@ -1033,14 +1035,19 @@ void ending_state(void)
     if ((s_endingTable[s_endingId].epilogue == 1) &&
         (!g_bDcMode || g_DcDifficulty < DC_DIFFICULTY_ADVANCED) &&
         (s_hasSpecialKey == 0)) {
-        s_stepTimer = 0;
-        s_stepDone = 0;
-        s_step = 0;
-        s_dat4d6af4 = 0;
-        do {
-            ending_epilogue_update();
-            Task_sleep(1);
-        } while (s_stepDone == 0);
+        // [Ending] Epilogue=0 skips the rocket-launcher scene (the screen goes
+        // straight on to the fade/save); the key is still handed over below
+        // unless [Ending] SpecialKey=0.
+        if (Extras_EndingEpilogue()) {
+            s_stepTimer = 0;
+            s_stepDone = 0;
+            s_step = 0;
+            s_dat4d6af4 = 0;
+            do {
+                ending_epilogue_update();
+                Task_sleep(1);
+            } while (s_stepDone == 0);
+        }
         s_hasSpecialKey++;
     }
 
@@ -1050,11 +1057,13 @@ void ending_state(void)
     // Next-cycle save data
     // ------------------------------------------------------------------
     // 0x69780 = 432000 ticks = 4 hours at 30Hz - the infinite-weapon cutoff.
-    s_underTimeLimit = (g_gameTimerSnapshot < 0x69780) ? 1 : 0;
+    s_underTimeLimit = (unsigned char)Extras_UnderTimeLimit(g_gameTimerSnapshot);   // [Ending] TimeLimitMinutes (default 240 = 0x69780 ticks)
 
     s_grantRocket = 0;
     if (Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_INF_R_LAUNCHER) != 0) s_grantRocket = 1;
     if (g_SavesCounter == 1) s_grantRocket = 1;
+    // [Ending] RocketLauncher=0|1 overrides the automatic rule above.
+    if (Extras_EndingRocket() >= 0) s_grantRocket = (unsigned char)Extras_EndingRocket();
 
     LoadFile(GAME_DATA_ROOT "data\\bio_card.dat", g_BioCardData, 0x20);
     if (g_bDcMode) {
@@ -1085,29 +1094,49 @@ void ending_state(void)
     g_main_state_flags2 &= ~MSF2_DC_ADVANCED;
 
     unsigned char slot = g_TotalHeldItems;
-    if ((s_effectsEnabled != 0) || (s_grantRocket != 0)) {
+    const int slotLimit = Extras_CharSlotCount(g_playerEntity.id & 3);
+    // Hands out one reward item; skipped (and logged) when the inventory is full.
+    #define GRANT(ITEM_ID, QTY)                                                   \
+        do {                                                                       \
+            if (slot < slotLimit) {                                                \
+                g_ItemsSlots[slot].Id  = (unsigned char)(ITEM_ID);                 \
+                g_ItemsSlots[slot].qty = (unsigned char)(QTY);                     \
+                g_TotalHeldItems++;                                                \
+                slot++;                                                            \
+            } else {                                                               \
+                dbg_printf("[EXTRAS] ending: no free slot for item 0x%02X\n",      \
+                           (unsigned)(ITEM_ID));                                   \
+            }                                                                      \
+        } while (0)
+
+    if (s_grantRocket != 0 || ((s_effectsEnabled != 0) && Extras_EndingRocket() < 0)) {
         // The no-save run and the carried-over unlock both hand out the
         // inf. rocket launcher (item 0x0a) and raise its permanent flag.
         Flg_on((int)g_ScenarioFlags, SCENARIO_FLAG_INF_R_LAUNCHER);
-        g_ItemsSlots[slot].Id = ITEM_ROCKET_LAUNCHER;
-        g_ItemsSlots[slot].qty = 1;
-        g_TotalHeldItems++;
-        slot++;
+        GRANT(ITEM_ROCKET_LAUNCHER, 1);
     }
-    if (s_hasSpecialKey != 0 &&
+    if (s_hasSpecialKey != 0 && Extras_EndingSpecialKey() &&
         (!g_bDcMode || g_DcDifficulty < DC_DIFFICULTY_ADVANCED)) {
-        g_ItemsSlots[slot].Id = ITEM_SPECIAL_KEY;
-        g_ItemsSlots[slot].qty = 1;
-        g_TotalHeldItems++;
-        slot++;
+        GRANT(ITEM_SPECIAL_KEY, 1);
     }
     if (s_underTimeLimit != 0) {
-        g_ItemsSlots[slot].Id =
-            ((g_playerEntity.id & 3) != CHAR_CHRIS) ? ITEM_INGRAM : ITEM_MINIMI;
-        g_ItemsSlots[slot].qty = 1;
-        g_TotalHeldItems++;
-        slot++;
+        // Ingram (Jill) / Minimi (Chris) by default; [Ending] TimedReward= can
+        // name any item (e.g. COLT_PYTHON_MAG) and TimedRewardInfinite=1 makes a
+        // Colt Python reward refill itself when empty.
+        int rewardQty = 1;
+        const int rewardId = Extras_TimedRewardItem(g_playerEntity.id & 3, &rewardQty);
+        if (rewardId != 0) {
+            GRANT(rewardId, rewardQty);
+            if (rewardId == ITEM_COLT_PYTHON_MAG && Extras_TimedRewardInfinite())
+                Flg_on((int)g_ScenarioFlags, DC_SCENARIO_FLAG_INF_COLT_PYTHON);
+        }
     }
+    {
+        unsigned char extraIds[8], extraQtys[8];
+        const int extraCount = Extras_EndingExtraItems(extraIds, extraQtys, 8);
+        for (int i = 0; i < extraCount; i++) GRANT(extraIds[i], extraQtys[i]);
+    }
+    #undef GRANT
 
     // Director's Cut's ending bonus (0x800e1914): 
     // an ADVANCED run that reaches ending 6 or 7 - the

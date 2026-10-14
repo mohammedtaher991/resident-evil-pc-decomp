@@ -144,7 +144,8 @@ static_assert(sizeof(BioCardLayout) == 0x41C, "BioCardLayout size mismatch");
 
 #define g_itemboxSlots            (g_BioCard.itemboxSlots)                      // ItemSlot[48] 0x00be98e4
 #define g_ItemsSlots              (g_BioCard.itemsSlots)                        // ItemSlot[6] 0x00be9944
-#define g_RebeccaItemSlots        (g_BioCard.rebeccaItemsSlots)                 // ItemSlot[6] 0x00be9950
+ItemSlot* Extras_RebeccaSlotsPtr(void);  // Extras.cpp: BioCard array, or her own 8-slot array when widened
+#define g_RebeccaItemSlots        (Extras_RebeccaSlotsPtr())                    // ItemSlot[6] 0x00be9950 (see Extras.h)
 
 #define g_roomBgmState            (g_BioCard.roomBgmState)                      // BYTE[224] 0x00be995c
 

@@ -12,6 +12,7 @@
 // Menu mode: DAT_00ae9f10 determines initial submenu on open
 // ============================================================================
 #include "../Globals.h"
+#include "Extras.h"
 #include "../platform/platform.h"
 #include "../system/AssetPath.h"
 #include "../DebugPrint.h"
@@ -377,8 +378,9 @@ LAB_0046381c:
     }
 
     // 0x0046381c-0x00463880: Set character display flags
-    charBits = ((g_playerEntity.id + 1) & 2);
-    g_totalInventorySlots = charBits + 6;
+    // 8-slot art (bit 1) whenever the character has more than 6 slots (Jill, or a widened Chris/Rebecca)
+    g_totalInventorySlots = (unsigned char)Extras_ActiveSlotCount();
+    charBits = (g_totalInventorySlots > 6) ? 2 : 0;
     DAT_00ae9f19 = charBits | (g_playerEntity.id & 1);
 
     // 0x00463880-0x004638e3: Check if map is available

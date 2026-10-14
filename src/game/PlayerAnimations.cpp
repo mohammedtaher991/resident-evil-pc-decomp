@@ -1,5 +1,6 @@
 // PlayerAnimations.cpp - Player animation state machines (decompiled from Ghidra)
 #include "../Globals.h"
+#include "Extras.h"
 #include "../marni/MarniSystem.h"
 #include <cstdio>
 #include <cstdlib>
@@ -5183,7 +5184,7 @@ static void fire_consume_ammo_stack(void)
     unsigned char maxQty = g_ItemMaxQty[(unsigned int)weapon_ammo_item_id(weaponId) * 4];
     unsigned char bestSlot = 0;
     unsigned char bestQty = 0;
-    unsigned char slots = (unsigned char)((4 - ((g_playerEntity.id & 3) != 1)) * 2);
+    unsigned char slots = (unsigned char)Extras_ActiveSlotCount();
     for (unsigned char i = 0; i < slots; i++) {
         unsigned char id = ((unsigned char*)g_ItemSlotsPointer)[i * 2];
         unsigned char qty = ((unsigned char*)g_ItemSlotsPointer)[i * 2 + 1];

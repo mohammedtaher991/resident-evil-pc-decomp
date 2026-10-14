@@ -18,6 +18,7 @@ int  Extras_CharSlotCount(int charId);
 // beyond 6 slots Rebecca moves to her own 8-slot array (saved in the save file's
 // spare tail) so she no longer shares memory with Chris's slots 7-8.
 ItemSlot* Extras_RebeccaSlotsPtr(void);
+int  Extras_RebeccaStorage(void);   // slots actually allocated for Rebecca (6, or 8 when extended)
 
 // ---- starting items -------------------------------------------------------
 // Called at the end of SetInitialItems(): applies ChrisItems= / JillItems= /
@@ -35,9 +36,6 @@ int  Extras_TimedRewardItem(int charId, int* qty);
 int  Extras_TimedRewardInfinite(void); // Colt Python reward never runs dry
 // Extra items always granted at the ending (ExtraItems=). Returns count.
 int  Extras_EndingExtraItems(unsigned char* ids, unsigned char* qtys, int maxItems);
-
-// 1 when the infinite-Colt-Python flag should be honoured outside DC mode.
-int  Extras_InfiniteColtEnabled(void);
 
 // Save-file tail (spare bytes, see Difficulty.h): Rebecca's extended inventory.
 void Extras_WriteSave(char* fileBuffer);

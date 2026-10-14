@@ -1,6 +1,7 @@
 // RoomEvents.cpp - SCD room event system (decompiled from Ghidra)
 // Implements room_events_check and all direct dependencies.
 #include "../Globals.h"
+#include "Extras.h"
 #include "../DebugPrint.h"
 #include "dc/Items.h"    // lockpick item id the DC moved to 0x0D
 #include <cstring>
@@ -923,7 +924,7 @@ void room_event_item_pickup(void)
     if (((ITEM_ROCKET_LAUNCHER < g_selectedItemId) && (g_selectedItemId < ITEM_EMPTY_BOTTLE)) ||
         (g_selectedItemId == ITEM_INK_RIBBONS)) {
         // Stackable: merge into an existing slot of the same item id.
-        unsigned char slotCount = (unsigned char)((4 - ((g_playerEntity.id & 3) != 1)) * 2);
+        unsigned char slotCount = (unsigned char)Extras_ActiveSlotCount();
         unsigned char idx = 0;
         while (slotCount != 0) {
             unsigned char* slot = (unsigned char*)g_ItemSlotsPointer + (unsigned int)idx * 2;

@@ -7,6 +7,7 @@
 //               rearrange_item_slots(0x00451510), cut_set(0x004628c0),
 //               StMask(0x00497690), Task_sleep(0x004201e0), Task_chain(0x00420210)
 #include "../Globals.h"
+#include "Extras.h"
 #include "../platform/platform.h"
 #include "FileLoader.h"
 #include "SpriteRenderer.h"
@@ -661,7 +662,7 @@ void rearrange_item_slots(void)
     unsigned char readIdx = 0;
     unsigned char writeIdx = 0;
     // Chris (0) has 6 slots, Jill (1) has 8 slots
-    int maxSlots = (4 - (((g_playerEntity.id & 3) != 1) ? 1 : 0)) * 2;
+    int maxSlots = Extras_ActiveSlotCount();
     int remaining = maxSlots;
 
     do {

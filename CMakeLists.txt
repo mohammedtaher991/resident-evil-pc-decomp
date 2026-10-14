@@ -64,6 +64,7 @@ set(RE1_SOURCES
     src/game/GameStart.cpp
     src/game/Difficulty.cpp
     src/game/Balance.cpp
+    src/game/Extras.cpp
     src/game/MenuFont.cpp
     src/game/Addon.cpp
     src/game/GteMatrix.cpp
