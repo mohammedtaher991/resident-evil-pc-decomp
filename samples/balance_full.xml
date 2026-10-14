@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  balance.xml - damage tuning. Format: docs/BALANCE_XML.md
+  Put it next to difficulty.ini (or in Assets/Addons/<Name>/ for an add-on).
+  Leave a value out and the game keeps the code's own number.
+  mode="NAME"  applies only while that difficulty mode is chosen (as in difficulty.ini)
+  addon="Name" applies only while that add-on is on
+-->
+<balance>
+  <!-- Damage the player's weapons deal. enemy ids: ZOMBIE, ZOMBIE_NAKED, CERBERUS, WEB_SPINNER, BLACK_TIGER, CROW, HUNTER, WASP, PLANT42, CHIMERA, ADDER, NEPTUNE, TYRANT_1, YAWN_1, PLANT42_ROOTS, MONSTER_PLANT, TYRANT_2, ZOMBIE_VARIANT, YAWN_2, SPIDER_WEB -->
+  <!-- weapon ids: KNIFE, HANDGUN, SHOTGUN, PYTHON_DUMDUM, MAGNUM, FLAMETHROWER, GL_EXPLOSIVE, GL_ACID, GL_FLAME, ROCKET. 'damage' sets the value, 'scale' is a percent. -->
+  <weapons second="false">
+    <enemy id="ZOMBIE">
+      <weapon id="KNIFE" damage="8"/>
+      <weapon id="HANDGUN" damage="9"/>
+      <weapon id="SHOTGUN" damage="53"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="201"/>
+      <weapon id="GL_ACID" damage="95"/>
+      <weapon id="GL_FLAME" damage="95"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="ZOMBIE_NAKED">
+      <weapon id="KNIFE" damage="8"/>
+      <weapon id="HANDGUN" damage="9"/>
+      <weapon id="SHOTGUN" damage="53"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="201"/>
+      <weapon id="GL_ACID" damage="95"/>
+      <weapon id="GL_FLAME" damage="95"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="CERBERUS">
+      <weapon id="KNIFE" damage="30"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="60"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="100"/>
+      <weapon id="GL_FLAME" damage="100"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="WEB_SPINNER">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="100"/>
+      <weapon id="GL_ACID" damage="100"/>
+      <weapon id="GL_FLAME" damage="200"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="BLACK_TIGER">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="14"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="70"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="60"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="205"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="CROW">
+      <weapon id="KNIFE" damage="50"/>
+      <weapon id="HANDGUN" damage="26"/>
+      <weapon id="SHOTGUN" damage="50"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="HUNTER">
+      <weapon id="KNIFE" damage="16"/>
+      <weapon id="HANDGUN" damage="14"/>
+      <weapon id="SHOTGUN" damage="32"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="100"/>
+      <weapon id="GL_ACID" damage="200"/>
+      <weapon id="GL_FLAME" damage="100"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="WASP">
+      <weapon id="KNIFE" damage="20"/>
+      <weapon id="HANDGUN" damage="30"/>
+      <weapon id="SHOTGUN" damage="60"/>
+      <weapon id="PYTHON_DUMDUM" damage="70"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="80"/>
+      <weapon id="GL_FLAME" damage="80"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="PLANT42">
+      <weapon id="KNIFE" damage="15"/>
+      <weapon id="HANDGUN" damage="15"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="38"/>
+      <weapon id="MAGNUM" damage="74"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="50"/>
+      <weapon id="GL_ACID" damage="40"/>
+      <weapon id="GL_FLAME" damage="150"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="CHIMERA">
+      <weapon id="KNIFE" damage="17"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="30"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="ADDER">
+      <weapon id="KNIFE" damage="20"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="30"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="NEPTUNE">
+      <weapon id="KNIFE" damage="0"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="0"/>
+      <weapon id="GL_EXPLOSIVE" damage="0"/>
+      <weapon id="GL_ACID" damage="0"/>
+      <weapon id="GL_FLAME" damage="0"/>
+      <weapon id="ROCKET" damage="0"/>
+    </enemy>
+    <enemy id="TYRANT_1">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="30"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="80"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="100"/>
+      <weapon id="GL_ACID" damage="100"/>
+      <weapon id="GL_FLAME" damage="100"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="YAWN_1">
+      <weapon id="KNIFE" damage="20"/>
+      <weapon id="HANDGUN" damage="30"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="80"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="80"/>
+      <weapon id="GL_ACID" damage="130"/>
+      <weapon id="GL_FLAME" damage="50"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="PLANT42_ROOTS">
+      <weapon id="KNIFE" damage="0"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="0"/>
+      <weapon id="GL_EXPLOSIVE" damage="0"/>
+      <weapon id="GL_ACID" damage="0"/>
+      <weapon id="GL_FLAME" damage="0"/>
+      <weapon id="ROCKET" damage="0"/>
+    </enemy>
+    <enemy id="MONSTER_PLANT">
+      <weapon id="KNIFE" damage="0"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="0"/>
+      <weapon id="GL_EXPLOSIVE" damage="0"/>
+      <weapon id="GL_ACID" damage="0"/>
+      <weapon id="GL_FLAME" damage="0"/>
+      <weapon id="ROCKET" damage="0"/>
+    </enemy>
+    <enemy id="TYRANT_2">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="30"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="80"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="100"/>
+      <weapon id="GL_ACID" damage="100"/>
+      <weapon id="GL_FLAME" damage="100"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="ZOMBIE_VARIANT">
+      <weapon id="KNIFE" damage="8"/>
+      <weapon id="HANDGUN" damage="9"/>
+      <weapon id="SHOTGUN" damage="53"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="130"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="201"/>
+      <weapon id="GL_ACID" damage="95"/>
+      <weapon id="GL_FLAME" damage="95"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="YAWN_2">
+      <weapon id="KNIFE" damage="20"/>
+      <weapon id="HANDGUN" damage="30"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="80"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="80"/>
+      <weapon id="GL_ACID" damage="130"/>
+      <weapon id="GL_FLAME" damage="50"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="SPIDER_WEB">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="2"/>
+      <weapon id="GL_EXPLOSIVE" damage="30"/>
+      <weapon id="GL_ACID" damage="30"/>
+      <weapon id="GL_FLAME" damage="30"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+  </weapons>
+  <weapons second="true">
+    <enemy id="ZOMBIE">
+      <weapon id="KNIFE" damage="8"/>
+      <weapon id="HANDGUN" damage="9"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="60"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="201"/>
+      <weapon id="GL_ACID" damage="70"/>
+      <weapon id="GL_FLAME" damage="70"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="ZOMBIE_NAKED">
+      <weapon id="KNIFE" damage="8"/>
+      <weapon id="HANDGUN" damage="9"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="60"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="201"/>
+      <weapon id="GL_ACID" damage="70"/>
+      <weapon id="GL_FLAME" damage="70"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="CERBERUS">
+      <weapon id="KNIFE" damage="30"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="35"/>
+      <weapon id="PYTHON_DUMDUM" damage="60"/>
+      <weapon id="MAGNUM" damage="60"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="90"/>
+      <weapon id="GL_FLAME" damage="90"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="WEB_SPINNER">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="15"/>
+      <weapon id="SHOTGUN" damage="24"/>
+      <weapon id="PYTHON_DUMDUM" damage="30"/>
+      <weapon id="MAGNUM" damage="40"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="100"/>
+      <weapon id="GL_ACID" damage="100"/>
+      <weapon id="GL_FLAME" damage="200"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="BLACK_TIGER">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="12"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="70"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="50"/>
+      <weapon id="GL_ACID" damage="50"/>
+      <weapon id="GL_FLAME" damage="103"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="CROW">
+      <weapon id="KNIFE" damage="50"/>
+      <weapon id="HANDGUN" damage="26"/>
+      <weapon id="SHOTGUN" damage="50"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="50"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="HUNTER">
+      <weapon id="KNIFE" damage="16"/>
+      <weapon id="HANDGUN" damage="14"/>
+      <weapon id="SHOTGUN" damage="25"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="80"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="50"/>
+      <weapon id="GL_ACID" damage="80"/>
+      <weapon id="GL_FLAME" damage="50"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="WASP">
+      <weapon id="KNIFE" damage="20"/>
+      <weapon id="HANDGUN" damage="30"/>
+      <weapon id="SHOTGUN" damage="60"/>
+      <weapon id="PYTHON_DUMDUM" damage="70"/>
+      <weapon id="MAGNUM" damage="70"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="80"/>
+      <weapon id="GL_FLAME" damage="80"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="PLANT42">
+      <weapon id="KNIFE" damage="15"/>
+      <weapon id="HANDGUN" damage="10"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="38"/>
+      <weapon id="MAGNUM" damage="20"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="40"/>
+      <weapon id="GL_ACID" damage="40"/>
+      <weapon id="GL_FLAME" damage="150"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="CHIMERA">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="12"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="41"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="60"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="100"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="ADDER">
+      <weapon id="KNIFE" damage="20"/>
+      <weapon id="HANDGUN" damage="20"/>
+      <weapon id="SHOTGUN" damage="40"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="50"/>
+      <weapon id="FLAMETHROWER" damage="30"/>
+      <weapon id="GL_EXPLOSIVE" damage="200"/>
+      <weapon id="GL_ACID" damage="60"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="NEPTUNE">
+      <weapon id="KNIFE" damage="0"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="0"/>
+      <weapon id="GL_EXPLOSIVE" damage="0"/>
+      <weapon id="GL_ACID" damage="0"/>
+      <weapon id="GL_FLAME" damage="0"/>
+      <weapon id="ROCKET" damage="0"/>
+    </enemy>
+    <enemy id="TYRANT_1">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="15"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="40"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="35"/>
+      <weapon id="GL_ACID" damage="35"/>
+      <weapon id="GL_FLAME" damage="35"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="YAWN_1">
+      <weapon id="KNIFE" damage="15"/>
+      <weapon id="HANDGUN" damage="18"/>
+      <weapon id="SHOTGUN" damage="5"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="60"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="60"/>
+      <weapon id="GL_ACID" damage="120"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="PLANT42_ROOTS">
+      <weapon id="KNIFE" damage="0"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="0"/>
+      <weapon id="GL_EXPLOSIVE" damage="0"/>
+      <weapon id="GL_ACID" damage="0"/>
+      <weapon id="GL_FLAME" damage="0"/>
+      <weapon id="ROCKET" damage="0"/>
+    </enemy>
+    <enemy id="MONSTER_PLANT">
+      <weapon id="KNIFE" damage="0"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="0"/>
+      <weapon id="GL_EXPLOSIVE" damage="0"/>
+      <weapon id="GL_ACID" damage="0"/>
+      <weapon id="GL_FLAME" damage="0"/>
+      <weapon id="ROCKET" damage="0"/>
+    </enemy>
+    <enemy id="TYRANT_2">
+      <weapon id="KNIFE" damage="10"/>
+      <weapon id="HANDGUN" damage="15"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="40"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="35"/>
+      <weapon id="GL_ACID" damage="35"/>
+      <weapon id="GL_FLAME" damage="35"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="ZOMBIE_VARIANT">
+      <weapon id="KNIFE" damage="8"/>
+      <weapon id="HANDGUN" damage="9"/>
+      <weapon id="SHOTGUN" damage="20"/>
+      <weapon id="PYTHON_DUMDUM" damage="50"/>
+      <weapon id="MAGNUM" damage="60"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="201"/>
+      <weapon id="GL_ACID" damage="70"/>
+      <weapon id="GL_FLAME" damage="70"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="YAWN_2">
+      <weapon id="KNIFE" damage="15"/>
+      <weapon id="HANDGUN" damage="18"/>
+      <weapon id="SHOTGUN" damage="15"/>
+      <weapon id="PYTHON_DUMDUM" damage="40"/>
+      <weapon id="MAGNUM" damage="60"/>
+      <weapon id="FLAMETHROWER" damage="20"/>
+      <weapon id="GL_EXPLOSIVE" damage="60"/>
+      <weapon id="GL_ACID" damage="120"/>
+      <weapon id="GL_FLAME" damage="60"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+    <enemy id="SPIDER_WEB">
+      <weapon id="KNIFE" damage="6"/>
+      <weapon id="HANDGUN" damage="0"/>
+      <weapon id="SHOTGUN" damage="0"/>
+      <weapon id="PYTHON_DUMDUM" damage="0"/>
+      <weapon id="MAGNUM" damage="0"/>
+      <weapon id="FLAMETHROWER" damage="2"/>
+      <weapon id="GL_EXPLOSIVE" damage="10"/>
+      <weapon id="GL_ACID" damage="20"/>
+      <weapon id="GL_FLAME" damage="30"/>
+      <weapon id="ROCKET" damage="900"/>
+    </enemy>
+  </weapons>
+  <!-- Damage each enemy attack deals to the player. -->
+  <enemies>
+    <!-- Adder -->
+    <hit key="Adder:adder_behavior_bite#1" damage="6"/>
+    <!-- BlackTiger -->
+    <hit key="BlackTiger:bt_behaviour_bite#1" damage="20"/>
+    <!-- Cerberus -->
+    <hit key="Cerberus:cerberus_bite_player#1" damage="12"/>
+    <!-- Crow -->
+    <!-- Crow:crow_anim_grab#1 uses code: BAL_DMG("Crow:crow_anim_grab#1", ((Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) ? 3 : 4)) -->
+    <!-- Crow:crow_beh_peck#1 uses code: BAL_DMG("Crow:crow_beh_peck#1", ((Flg_ck((int)g_ScenarioFlags, SCENARIO_FLAG_SECOND_PLAYTHROUGH) == 0) ? 6 : 16)) -->
+    <!-- Hunter -->
+    <hit key="Hunter:hunter_roll_leap_fixed#1" damage="13"/>
+    <hit key="Hunter:hunter_roll_leap_fixed#2" damage="10"/>
+    <hit key="Hunter:hunter_roll_leap_fixed#3" damage="20"/>
+    <hit key="Hunter:hunter_roll_leap_fixed#4" damage="15"/>
+    <!-- MonsterPlant -->
+    <hit key="MonsterPlant:mp_step_03#1" damage="2"/>
+    <hit key="MonsterPlant:mp_step_06#1" damage="2"/>
+    <!-- Plant42 -->
+    <hit key="Plant42:plant42_sweep_hit#1" damage="16"/>
+    <hit key="Plant42:plant42_sweep_hit#2" damage="25"/>
+    <hit key="Plant42:plant42_behavior_spit#1" damage="8"/>
+    <hit key="Plant42:plant42_behavior_spit#2" damage="15"/>
+    <hit key="Plant42:plant42_behavior_hold#1" damage="20"/>
+    <hit key="Plant42:plant42_behavior_hold#2" damage="40"/>
+    <!-- Tyrant -->
+    <!-- Tyrant:tyrant_damage_player#1 uses code: BAL_DMG("Tyrant:tyrant_damage_player#1", base) -->
+    <!-- Tyrant:tyrant_damage_player#2 uses code: BAL_DMG("Tyrant:tyrant_damage_player#2", withFlag) -->
+    <!-- Wasp -->
+    <hit key="Wasp:wasp_behavior_grab#1" damage="8"/>
+    <hit key="Wasp:wasp_behavior_grab#2" damage="15"/>
+    <!-- WebSpinner -->
+    <hit key="WebSpinner:ws_behaviour_lunge#1" damage="10"/>
+    <hit key="WebSpinner:ws_behaviour_lunge#2" damage="18"/>
+    <hit key="WebSpinner:ws_update_webs#1" damage="2"/>
+    <hit key="WebSpinner:ws_update_webs#2" damage="3"/>
+    <!-- Yawn -->
+    <hit key="Yawn:yawn_action_bite#1" damage="10"/>
+    <hit key="Yawn:yawn_action_bite#2" damage="28"/>
+    <!-- Zombie -->
+    <!-- Zombie:zombie_attack#1 uses code: BAL_DMG("Zombie:zombie_attack#1", damage) -->
+    <!-- Player -->
+    <hit key="Player:player_state_01_control#1" damage="2"/>
+  </enemies>
+</balance>

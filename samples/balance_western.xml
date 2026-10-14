@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  balance.xml - damage tuning. Format: docs/BALANCE_XML.md
+  Put it next to difficulty.ini (or in Assets/Addons/<Name>/ for an add-on).
+  Leave a value out and the game keeps the code's own number.
+  mode="NAME"  applies only while that difficulty mode is chosen (as in difficulty.ini)
+  addon="Name" applies only while that add-on is on
+-->
+<balance>
+  <enemies mode="WESTERN">
+    <!-- Crow -->
+    <hit key="Crow:crow_anim_grab#1" damage="4"/>  <!-- Crow.cpp:369 -->
+    <hit key="Crow:crow_beh_peck#1" damage="16"/>  <!-- Crow.cpp:743 -->
+    <!-- Hunter -->
+    <hit key="Hunter:hunter_roll_leap_fixed#2" damage="13"/>  <!-- Hunter.cpp:1186 -->
+    <hit key="Hunter:hunter_roll_leap_fixed#4" damage="20"/>  <!-- Hunter.cpp:1434 -->
+    <!-- Plant42 -->
+    <hit key="Plant42:plant42_sweep_hit#1" damage="25"/>  <!-- Plant42.cpp:453 -->
+    <hit key="Plant42:plant42_behavior_spit#1" damage="15"/>  <!-- Plant42.cpp:661 -->
+    <hit key="Plant42:plant42_behavior_hold#1" damage="32"/>  <!-- Plant42.cpp:917 -->
+    <!-- WebSpinner -->
+    <hit key="WebSpinner:ws_behaviour_lunge#1" damage="18"/>  <!-- WebSpinner.cpp:942 -->
+    <hit key="WebSpinner:ws_update_webs#1" damage="3"/>  <!-- WebSpinner.cpp:1457 -->
+    <!-- Yawn -->
+    <hit key="Yawn:yawn_action_bite#1" damage="28"/>  <!-- Yawn.cpp:879 -->
+  </enemies>
+</balance>
