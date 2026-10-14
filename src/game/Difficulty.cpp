@@ -8,6 +8,7 @@
 // If nothing is found, or no valid [ModeN] section exists, the built-in
 // STANDARD / TRAINING / ADVANCED trio is used.
 #include "Difficulty.h"
+#include "Extras.h"
 #include "../Globals.h"
 #include "../platform/platform.h"
 #include "../system/AssetPath.h"
@@ -247,6 +248,12 @@ int Difficulty_AddonAllowed(const char* name)
     return 0;
 }
 
+const char* Difficulty_IniPath(void)
+{
+    if (!s_loaded) Difficulty_Reload();
+    return s_iniPath;
+}
+
 const char* Difficulty_AddonNames(void)
 {
     if (!s_loaded) Difficulty_Reload();
@@ -345,10 +352,12 @@ void Difficulty_WriteSave(char* fileBuffer)
     fileBuffer[DIFF_SAVE_OFFSET + 1] = 'I';
     fileBuffer[DIFF_SAVE_OFFSET + 2] = 'F';
     fileBuffer[DIFF_SAVE_OFFSET + 3] = (char)g_DifficultyId;
+    Extras_WriteSave(fileBuffer);
 }
 
 void Difficulty_ReadSave(const char* fileBuffer, int fileSize)
 {
+    Extras_ReadSave(fileBuffer, fileSize);
     g_DifficultyId = 0;
     if (fileSize <= DIFF_SAVE_OFFSET + 3) return;
 

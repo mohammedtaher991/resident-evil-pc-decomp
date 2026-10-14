@@ -56,6 +56,9 @@ void Difficulty_WriteSave(char* fileBuffer);
 // TRAINING health.
 void Difficulty_ReadSave(const char* fileBuffer, int fileSize);
 
+// Path of the difficulty.ini that was loaded ("" when the built-in modes are used).
+const char* Difficulty_IniPath(void);
+
 // Values for game code. All fall back to "no change" when no mode applies.
 int  Difficulty_StartHealth(int charId);        // 0 = leave the game's value; charId 0 = Chris, 1 = Jill
 int  Difficulty_ScaleWeaponDamage(int dmg);
