@@ -13,7 +13,11 @@ Later files win. Next to `difficulty.ini` is the usual place.
 3. the asset root, the exe folder, `./balance.xml`
 4. `<Assets>/Addons/<Name>/balance.xml` for each active add-on
 
-The log (`[BALANCE] reading ...`, `[BALANCE] N rule(s) loaded`) shows what was read.
+In each of those folders the game reads `balance.xml`, then `balance_<mode>.xml` for every
+difficulty mode and `balance_<addon>.xml` for every add-on (a `balance_western.xml` is read only
+while WESTERN / the Western add-on is active). Any other file name (`balance_full.xml`, ...) is
+ignored. The log (`[BALANCE] reading ...`, `[BALANCE] N rule(s) loaded`) shows what was read; if
+nothing was found it says so and lists the folder searched.
 
 ## Format
 ```xml
@@ -53,6 +57,14 @@ python tools/balance_tool.py instrument MyCopy/Hunter.cpp       # add BAL_DMG ho
 ```
 `convert` diffs replacement `.cpp` files against the originals and writes only the differences,
 limited to a mode/add-on, so the `.cpp` swap is no longer needed (set `Replace=0`).
+
+## Enemy damage and replaced source files
+Enemy `<hit>` rules work through `BAL_DMG(...)` hooks in the enemy source files. If a build
+replaces an enemy file with a copy from `Assets\addons\<Name>\src` (difficulty.ini `Replace=1`),
+that copy has no hooks unless you add them, and its numbers stay hard-coded in EVERY mode. Either
+delete such copies and use `balance_<addon>.xml` instead (`convert` writes it for you), or run
+`python tools/balance_tool.py instrument Assets/addons/<Name>/src/*.cpp` once on them.
+Weapon-damage rules do not depend on this (they live in `WeaponDamage.cpp`).
 
 ## Not covered
 * Health *thresholds* and reach/knockback tweaks (e.g. Cerberus reach, Tyrant knockback).

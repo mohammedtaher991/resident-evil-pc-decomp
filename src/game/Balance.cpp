@@ -168,7 +168,7 @@ void Apply(const Tag& t, Ctx* ctx)
     if ((v = GetAttr(t, "addon"))) CopyStr(ctx->addon, sizeof(ctx->addon), v);
 }
 
-void ParseDocument(const char* text, size_t len)
+void ParseDocument(const char* text, size_t len, const char* defMode, const char* defAddon)
 {
     const char* p   = text;
     const char* end = text + len;
@@ -176,6 +176,8 @@ void ParseDocument(const char* text, size_t len)
     int depth = 0;
     memset(stack, 0, sizeof(stack));
     stack[0].enemy = -1; stack[0].second = -1;
+    if (defMode)  CopyStr(stack[0].mode,  sizeof(stack[0].mode),  defMode);
+    if (defAddon) CopyStr(stack[0].addon, sizeof(stack[0].addon), defAddon);
 
     while (p < end) {
         const char* lt = (const char*)memchr(p, '<', (size_t)(end - p));
@@ -267,13 +269,42 @@ bool ReadWhole(const char* raw, char** outBuf, size_t* outLen)
     return true;
 }
 
-void LoadOne(const char* path)
+int s_filesRead = 0;
+
+// defMode / defAddon: condition for a file named balance_<mode>.xml / balance_<addon>.xml
+// (rules inside may still narrow it with their own mode= / addon=).
+bool LoadOne(const char* path, const char* defMode = NULL, const char* defAddon = NULL)
 {
     char*  buf = NULL;
     size_t len = 0;
-    if (!ReadWhole(path, &buf, &len)) return;
-    ParseDocument(buf, len);
+    if (!ReadWhole(path, &buf, &len)) return false;
+    ParseDocument(buf, len, defMode, defAddon);
     free(buf);
+    ++s_filesRead;
+    return true;
+}
+
+// balance.xml, then balance_<mode>.xml for every difficulty mode and
+// balance_<addon>.xml for every add-on, all inside `dir`.
+void LoadFolder(const char* dir)
+{
+    char cand[512];
+    snprintf(cand, sizeof(cand), "%s/%s", dir, BAL_FILE);
+    LoadOne(cand);
+    for (int i = 0; i < Difficulty_Count(); ++i) {
+        const DifficultyMode* m = Difficulty_Get(i);
+        if (!m || !m->name[0]) continue;
+        char lower[32];
+        size_t k = 0;
+        for (; m->name[k] && k < sizeof(lower) - 1; ++k) lower[k] = (char)tolower((unsigned char)m->name[k]);
+        lower[k] = 0;
+        snprintf(cand, sizeof(cand), "%s/balance_%s.xml", dir, lower);
+        LoadOne(cand, m->name, NULL);
+    }
+    for (int i = 0; i < GetAddonCount(); ++i) {
+        snprintf(cand, sizeof(cand), "%s/balance_%s.xml", dir, GetAddonName(i));
+        LoadOne(cand, NULL, GetAddonName(i));
+    }
 }
 
 // Does the rule's mode / add-on condition hold right now?
@@ -305,13 +336,13 @@ void Balance_Reload(void)
     const char* base = GetAssetBase();
     const char* mode = GetAssetModeName();
     const char* root = GetAssetRoot();
+    s_filesRead = 0;
 
     if (base && base[0]) {
-        snprintf(cand, sizeof(cand), "%s/%s", base, BAL_FILE);
-        LoadOne(cand);
+        LoadFolder(base);
         if (mode && mode[0]) {
-            snprintf(cand, sizeof(cand), "%s/%s/%s", base, mode, BAL_FILE);
-            LoadOne(cand);
+            snprintf(cand, sizeof(cand), "%s/%s", base, mode);
+            LoadFolder(cand);
         }
     }
     if (root && root[0]) {
@@ -319,19 +350,20 @@ void Balance_Reload(void)
         LoadOne(cand);
     }
     char exeDir[240] = "";
-    if (plat_exe_dir(exeDir, sizeof(exeDir)) && exeDir[0]) {
-        snprintf(cand, sizeof(cand), "%s/%s", exeDir, BAL_FILE);
-        LoadOne(cand);
-    }
-    LoadOne("./" BAL_FILE);
+    if (plat_exe_dir(exeDir, sizeof(exeDir)) && exeDir[0]) LoadFolder(exeDir);
+    LoadFolder(".");
 
     // add-ons last, so they override the base game
     if (base && base[0]) {
         for (int i = 0; i < GetAddonCount(); ++i) {
-            snprintf(cand, sizeof(cand), "%s/Addons/%s/%s", base, GetAddonName(i), BAL_FILE);
-            LoadOne(cand);
+            snprintf(cand, sizeof(cand), "%s/Addons/%s", base, GetAddonName(i));
+            LoadFolder(cand);
         }
     }
+    if (s_filesRead == 0)
+        dbg_printf("[BALANCE] no balance.xml found - looked in %s (the file must be named "
+                   "balance.xml, or balance_<mode>.xml / balance_<addon>.xml)\n",
+                   (base && base[0]) ? base : "(no asset folder)");
     dbg_printf("[BALANCE] %d rule(s) loaded\n", s_ruleCount);
 }
 

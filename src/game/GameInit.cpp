@@ -1,6 +1,7 @@
 // GameInit.cpp - Game initialization and startup
 // All functions decompiled from Ghidra with original addresses
 #include "../Globals.h"
+#include "Difficulty.h"
 #include "../marni/MarniSystem.h"
 #include "../marni/PSXTexture.h"
 #include "FileLoader.h"
@@ -158,6 +159,19 @@ static void LoadAllItemsTexture(void)
     // as its own item_all.pix, so ResolveAssetRoot picks it without a branch
     // here. g_ItemsImageBuffer is sized for the larger sheet.
     LoadFile(GAME_DATA_ROOT "data\\item_all.pix", g_ItemsImageBuffer, 0x20);
+}
+
+// The sheet above is read at start-up, before a difficulty mode is chosen, so an
+// add-on that is limited to a mode (difficulty.ini Addon=) cannot supply its own
+// item_all.pix yet. Called before the held-item icons are built: re-reads the
+// sheet once whenever the selected mode changes. (item_mix.pix / medal.pix are
+// read on use, so they already follow the mode.)
+void ReloadItemSheetForMode(void)
+{
+    static int s_sheetMode = -1000;
+    if (s_sheetMode == g_DifficultyId) return;
+    s_sheetMode = g_DifficultyId;
+    LoadAllItemsTexture();
 }
 
 // ============================================================================

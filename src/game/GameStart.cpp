@@ -220,12 +220,14 @@ void CountHeldItems(void) // 0x00451600
 // After loading, composites all items into a single D3D11 SRV at the
 // texture slot the renderer expects.
 // ---------------------------------------------------------------------------
+extern void ReloadItemSheetForMode(void);
 void LoadHeldItemsImages(void) // 0x00451640
 {
     unsigned char totalItems;
     unsigned int index;
     void* savedSlotPointer;
 
+    ReloadItemSheetForMode();   // GameInit.cpp: pick up the add-on's item_all.pix for this mode
     CountHeldItems();
     g_ItemSlotsBitmask = (1 << (g_TotalHeldItems & 0x1f)) - 1;
     totalItems = g_TotalHeldItems;
