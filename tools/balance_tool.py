@@ -6,6 +6,9 @@ without recompiling. This tool builds that file from the code:
 
   export      dump every weapon-damage table value and every enemy attack that is
               hooked with BAL_DMG(...) into one editable balance.xml
+  export-ini  write the weapon damage table as a plain weapondamage.ini (one section per
+              enemy, one line per weapon) - put it in Assets/Addons/<Name>/ to mod the
+              damage of that add-on's modes only
   convert     compare REPLACEMENT .cpp files (e.g. an add-on's Assets/addons/<Name>/src)
               with the originals and write only the differences as XML rules, limited
               to a difficulty mode and/or add-on - so the .cpp copies are not needed
@@ -287,6 +290,26 @@ def cmd_export(args):
     write(args.out, "\n".join(out))
 
 
+def cmd_export_ini(args):
+    tables = read_weapon_tables(args.weapons or WEAPON_FILE)
+    out = ["; weapondamage.ini - damage the player's weapons deal (table of the game's own values).",
+           "; Put it in Assets\\Addons\\<Name>\\ and it applies only while that add-on is on, or next to",
+           "; difficulty.ini for every mode. A line may be a number (set the damage) or N% (percent).",
+           "; Delete the lines you do not want to change. [Enemy:Second] = second playthrough only.",
+           "; Weapons: " + ", ".join(WEAPONS) + "   (All = every weapon)", ""]
+    for key, suffix in (("first", ""), ("second", ":Second")):
+        vals = (tables or {}).get(key, [])
+        for e, name in enumerate(ENEMIES):
+            row = vals[e * 10:e * 10 + 10]
+            if len(row) < 10:
+                continue
+            out.append("[%s%s]" % (name, suffix))
+            for w, v in enumerate(row):
+                out.append("%s=%d" % (WEAPONS[w], v))
+            out.append("")
+    write(args.out, "\n".join(out))
+
+
 def cmd_convert(args):
     orig_dirs = args.orig or [os.path.join(ROOT, "src", "game", "entities"),
                               os.path.join(ROOT, "src", "game"),
@@ -384,6 +407,10 @@ def main():
     p.add_argument("--src", nargs="*"); p.add_argument("--weapons")
     p.add_argument("--mode"); p.add_argument("--addon"); p.add_argument("--out")
     p.set_defaults(fn=cmd_export)
+
+    p = sub.add_parser("export-ini")
+    p.add_argument("--weapons"); p.add_argument("--out")
+    p.set_defaults(fn=cmd_export_ini)
 
     p = sub.add_parser("convert")
     p.add_argument("--repl", required=True, help="folder with the replacement .cpp files")

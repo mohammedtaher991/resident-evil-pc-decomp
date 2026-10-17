@@ -87,3 +87,18 @@ The zombie's bite damage comes from two 16-entry tables indexed by the zombie's 
 </enemies>
 ```
 `<enemy name="Zombie" scale="..."/>` and the `Zombie:zombie_attack#1` key still apply on top.
+
+## weapondamage.ini - the weapon table as plain text
+Instead of XML you can edit `weapondamage.ini` (generate one with
+`python tools/balance_tool.py export-ini --out weapondamage.ini`; see `samples/weapondamage.ini`).
+```ini
+[Zombie]            ; enemy name / number / All   ([Zombie:Second] = second playthrough only)
+Handgun=12          ; a number sets the damage
+Shotgun=150%        ; N% scales it
+[All]
+Knife=110%
+```
+Where it is read: next to `difficulty.ini` (every mode), `Assets\Addons\<Name>\` (only while that
+add-on is on - so only the modes whose `Addon=` lists it), and `weapondamage_<mode>.ini` for one mode.
+After a (re)load the log prints the first weapon hits: `[BALANCE] weapon hit: ... table 9 -> 12 (1 of
+7 weapon rule(s) matched)` - if it says 0 matched, the rules did not apply to that hit.

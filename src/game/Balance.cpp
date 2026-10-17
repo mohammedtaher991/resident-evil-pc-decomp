@@ -71,7 +71,7 @@ bool IEq(const char* a, const char* b)
 // "any" / "*" / "" -> -1. A name from `names`, or a number (decimal or 0x..).
 int ParseId(const char* v, const char* const* names, int count)
 {
-    if (!v || !*v || strcmp(v, "*") == 0 || IEq(v, "any")) return -1;
+    if (!v || !*v || strcmp(v, "*") == 0 || IEq(v, "any") || IEq(v, "all")) return -1;
     for (int i = 0; i < count; ++i)
         if (IEq(v, names[i])) return i;
     if (isdigit((unsigned char)v[0]) || v[0] == '-') return (int)strtol(v, NULL, 0);
@@ -270,6 +270,83 @@ bool ReadWhole(const char* raw, char** outBuf, size_t* outLen)
 }
 
 int s_filesRead = 0;
+int s_hitLogCount = 0;
+
+char* TrimStr(char* t)
+{
+    while (*t && isspace((unsigned char)*t)) ++t;
+    char* e = t + strlen(t);
+    while (e > t && isspace((unsigned char)e[-1])) *--e = 0;
+    return t;
+}
+
+// weapondamage.ini - a damage table you can edit as plain text:
+//   [Zombie]            enemy name / number / All   ([Zombie:Second] = second playthrough only,
+//   Handgun=12          [Zombie:First] = first only; plain = both)
+//   Shotgun=150%        weapon name / number / All; N = set damage, N% = percent of the value
+// Conditions come from the file's place: Addons/<Name>/ -> only while that add-on is on.
+void LoadWeaponIni(const char* path, const char* defMode, const char* defAddon)
+{
+    char*  buf = NULL;
+    size_t len = 0;
+    if (!ReadWhole(path, &buf, &len)) return;
+    ++s_filesRead;
+
+    int enemy = -1, second = -1;
+    bool skip = false;
+    int added = 0;
+    char* save = buf;
+    while (save && *save) {
+        char* line = save;
+        char* nl = strchr(save, '\n');
+        if (nl) { *nl = 0; save = nl + 1; } else save = NULL;
+        char* p = TrimStr(line);
+        if (!*p || *p == ';' || *p == '#') continue;
+        if (*p == '[') {
+            char* e = strchr(p, ']');
+            if (!e) { skip = true; continue; }
+            *e = 0;
+            char* name = TrimStr(p + 1);
+            second = -1;
+            char* colon = strchr(name, ':');
+            if (colon) {
+                *colon = 0;
+                const char* suffix = TrimStr(colon + 1);
+                if (IEq(suffix, "second")) second = 1;
+                else if (IEq(suffix, "first")) second = 0;
+                name = TrimStr(name);
+            }
+            enemy = ParseId(name, kEnemyNames, kEnemyCount);
+            skip = (enemy == -2);
+            if (skip) dbg_printf("[BALANCE] weapondamage.ini: unknown enemy '%s'\n", name);
+            continue;
+        }
+        if (skip) continue;
+        char* eq = strchr(p, '=');
+        if (!eq) continue;
+        *eq = 0;
+        char* key = TrimStr(p);
+        char* val = TrimStr(eq + 1);
+        // a trailing comment on the value is ignored
+        for (char* c = val; *c; ++c) if (*c == ';' || *c == '#') { *c = 0; break; }
+        val = TrimStr(val);
+        if (!*val) continue;
+        const int weapon = ParseId(key, kWeaponNames, kWeaponCount);
+        if (weapon == -2) { dbg_printf("[BALANCE] weapondamage.ini: unknown weapon '%s'\n", key); continue; }
+        Rule r; memset(&r, 0, sizeof(r));
+        r.kind = RK_WEAPON; r.enemy = enemy; r.weapon = weapon; r.second = second;
+        r.damage = -1; r.scale = -1;
+        CopyStr(r.mode,  sizeof(r.mode),  defMode  ? defMode  : "");
+        CopyStr(r.addon, sizeof(r.addon), defAddon ? defAddon : "");
+        const size_t vl = strlen(val);
+        if (val[vl - 1] == '%') r.scale = atoi(val); else r.damage = atoi(val);
+        if (r.damage < 0 && r.scale < 0) continue;
+        AddRule(r);
+        ++added;
+    }
+    free(buf);
+    dbg_printf("[BALANCE] weapondamage.ini: %d rule(s) from %s\n", added, path);
+}
 
 // defMode / defAddon: condition for a file named balance_<mode>.xml / balance_<addon>.xml
 // (rules inside may still narrow it with their own mode= / addon=).
@@ -286,11 +363,13 @@ bool LoadOne(const char* path, const char* defMode = NULL, const char* defAddon 
 
 // balance.xml, then balance_<mode>.xml for every difficulty mode and
 // balance_<addon>.xml for every add-on, all inside `dir`.
-void LoadFolder(const char* dir)
+void LoadFolder(const char* dir, const char* folderAddon = NULL)
 {
     char cand[512];
     snprintf(cand, sizeof(cand), "%s/%s", dir, BAL_FILE);
-    LoadOne(cand);
+    LoadOne(cand, NULL, folderAddon);
+    snprintf(cand, sizeof(cand), "%s/weapondamage.ini", dir);
+    LoadWeaponIni(cand, NULL, folderAddon);
     for (int i = 0; i < Difficulty_Count(); ++i) {
         const DifficultyMode* m = Difficulty_Get(i);
         if (!m || !m->name[0]) continue;
@@ -300,6 +379,8 @@ void LoadFolder(const char* dir)
         lower[k] = 0;
         snprintf(cand, sizeof(cand), "%s/balance_%s.xml", dir, lower);
         LoadOne(cand, m->name, NULL);
+        snprintf(cand, sizeof(cand), "%s/weapondamage_%s.ini", dir, lower);
+        LoadWeaponIni(cand, m->name, NULL);
     }
     for (int i = 0; i < GetAddonCount(); ++i) {
         snprintf(cand, sizeof(cand), "%s/balance_%s.xml", dir, GetAddonName(i));
@@ -331,6 +412,7 @@ void Balance_Reload(void)
 {
     s_loaded    = true;
     s_ruleCount = 0;
+    s_hitLogCount = 0;
 
     char cand[512];
     const char* base = GetAssetBase();
@@ -357,7 +439,7 @@ void Balance_Reload(void)
     if (base && base[0]) {
         for (int i = 0; i < GetAddonCount(); ++i) {
             snprintf(cand, sizeof(cand), "%s/Addons/%s", base, GetAddonName(i));
-            LoadFolder(cand);
+            LoadFolder(cand, GetAddonName(i));    // files in an add-on's folder apply only while it is on
         }
     }
     if (s_filesRead == 0)
@@ -377,15 +459,27 @@ int Balance_WeaponDamage(unsigned int enemyType, unsigned int weaponSlot,
 {
     EnsureLoaded();
     int v = dmg;
+    int matched = 0, weaponRules = 0;
     for (int i = 0; i < s_ruleCount; ++i) {
         const Rule& r = s_rules[i];
         if (r.kind != RK_WEAPON) continue;
+        ++weaponRules;
         if (r.enemy  != -1 && r.enemy  != (int)enemyType)  continue;
         if (r.weapon != -1 && r.weapon != (int)weaponSlot) continue;
         if (r.second != -1 && r.second != (secondPlaythrough ? 1 : 0)) continue;
         if (!Active(r)) continue;
+        ++matched;
         if (r.damage >= 0) v = r.damage;
         if (r.scale  >= 0) v = Scale(v, r.scale);
+    }
+    // first few hits after each (re)load: what the table said and what was used
+    if (s_hitLogCount < 12) {
+        ++s_hitLogCount;
+        const DifficultyMode* m = Difficulty_Active();
+        dbg_printf("[BALANCE] weapon hit: enemy %u weapon %u run %d mode %s: table %d -> %d "
+                   "(%d of %d weapon rule(s) matched)\n",
+                   enemyType, weaponSlot, secondPlaythrough ? 2 : 1, m ? m->name : "?",
+                   dmg, v, matched, weaponRules);
     }
     return v;
 }
